@@ -32,6 +32,7 @@ use rmf_site_format::{
     Rotation, Scale,
 };
 
+use std::collections::HashMap;
 use std::str::Utf8Error;
 
 pub struct SdfPlugin;
@@ -55,7 +56,8 @@ impl Plugin for SdfPlugin {
             .register_type::<Battery>()
             .register_type::<AmbientSystem>()
             .register_type::<MechanicalSystem>()
-            .register_type::<PrimitiveShape>();
+            .register_type::<PrimitiveShape>()
+            .register_type::<SdfJointInfo>();
     }
 }
 
@@ -270,6 +272,16 @@ fn spawn_geometry<'a, 'b>(
     Ok(geometry)
 }
 
+/// Marker component for SDF joint information stored on link entities.
+#[derive(Component, Clone, Debug, Reflect)]
+#[reflect(Component)]
+pub struct SdfJointInfo {
+    pub name: String,
+    pub joint_type: String,
+    pub parent_link: String,
+    pub child_link: String,
+}
+
 fn load_model<'a, 'b>(
     bytes: Vec<u8>,
     load_context: &'a mut LoadContext<'b>,
@@ -280,17 +292,85 @@ fn load_model<'a, 'b>(
         Ok(root) => {
             if let Some(model) = root.model {
                 let mut world = World::default();
-                let e = world
+                let root_entity = world
                     .spawn((Transform::IDENTITY, Visibility::Inherited))
                     .id();
-                // TODO(luca) hierarchies and joints, rather than flat link importing
-                // All Open-RMF assets have no hierarchy, for now.
+
+                let is_static = model.r#static.unwrap_or(false);
+
+                // Phase 1: Spawn all links and build a name -> entity map
+                let mut link_name_to_entity = HashMap::<String, Entity>::new();
+                let mut link_entities = Vec::new();
+
                 for link in &model.link {
                     let link_pose = parse_pose(&link.pose);
                     let link_id = world
-                        .spawn((link_pose.transform(), Visibility::Inherited))
+                        .spawn((
+                            link_pose.transform(),
+                            Visibility::Inherited,
+                            NameInSite(link.name.clone()),
+                        ))
                         .id();
-                    world.entity_mut(e).add_child(link_id);
+                    link_name_to_entity.insert(link.name.clone(), link_id);
+                    link_entities.push((link_id, link));
+                }
+
+                // Phase 2: Build hierarchy from joints.
+                // A joint connects parent_link -> child_link. The child link
+                // becomes a child of the parent link in the Bevy hierarchy.
+                let mut child_links = std::collections::HashSet::<String>::new();
+
+                for joint in &model.joint {
+                    let parent_name = &joint.parent;
+                    let child_name = &joint.child;
+
+                    let parent_entity = if parent_name == "world" {
+                        Some(root_entity)
+                    } else {
+                        link_name_to_entity.get(parent_name).copied()
+                    };
+
+                    let child_entity = link_name_to_entity.get(child_name).copied();
+
+                    if let (Some(parent_e), Some(child_e)) = (parent_entity, child_entity) {
+                        // Apply joint pose to the child link's transform.
+                        // The joint pose is relative to the parent, so we use it
+                        // to position the child under the parent.
+                        let joint_pose = parse_pose(&joint.pose);
+                        world
+                            .entity_mut(child_e)
+                            .insert(Transform::from(joint_pose.transform()))
+                            .insert(ChildOf(parent_e));
+
+                        // Store joint metadata on the child entity
+                        world.entity_mut(child_e).insert(SdfJointInfo {
+                            name: joint.name.clone(),
+                            joint_type: joint.r#type.clone(),
+                            parent_link: parent_name.clone(),
+                            child_link: child_name.clone(),
+                        });
+
+                        child_links.insert(child_name.clone());
+                    } else {
+                        warn!(
+                            "SDF joint '{}' references unknown links: parent='{}', child='{}'",
+                            joint.name, parent_name, child_name
+                        );
+                    }
+                }
+
+                // Phase 3: Attach any links that are NOT children of a joint
+                // directly to the root entity (backwards-compatible with flat models).
+                for link in &model.link {
+                    if !child_links.contains(&link.name) {
+                        if let Some(&link_id) = link_name_to_entity.get(&link.name) {
+                            world.entity_mut(link_id).insert(ChildOf(root_entity));
+                        }
+                    }
+                }
+
+                // Phase 4: Spawn visual and collision geometries under their links
+                for (link_id, link) in &link_entities {
                     for visual in &link.visual {
                         let id = spawn_geometry(
                             &mut world,
@@ -298,7 +378,7 @@ fn load_model<'a, 'b>(
                             &visual.name,
                             &visual.pose,
                             load_context,
-                            model.r#static.unwrap_or(false),
+                            is_static,
                         )?;
                         match id {
                             Some(id) => {
@@ -306,7 +386,7 @@ fn load_model<'a, 'b>(
                                     .entity_mut(id)
                                     .insert(VisualMeshMarker)
                                     .insert(Category::Visual)
-                                    .insert(ChildOf(link_id));
+                                    .insert(ChildOf(*link_id));
                             }
                             None => warn!("Found unhandled geometry type {:?}", &visual.geometry),
                         }
@@ -318,7 +398,7 @@ fn load_model<'a, 'b>(
                             &collision.name,
                             &collision.pose,
                             load_context,
-                            model.r#static.unwrap_or(false),
+                            is_static,
                         )?;
                         match id {
                             Some(id) => {
@@ -326,7 +406,7 @@ fn load_model<'a, 'b>(
                                     .entity_mut(id)
                                     .insert(CollisionMeshMarker)
                                     .insert(Category::Collision)
-                                    .insert(ChildOf(link_id));
+                                    .insert(ChildOf(*link_id));
                             }
                             None => {
                                 warn!("Found unhandled geometry type {:?}", &collision.geometry)
@@ -334,13 +414,12 @@ fn load_model<'a, 'b>(
                         }
                     }
                 }
-                // Load parameters from slotcar plugin
+
+                // Phase 5: Load parameters from slotcar plugin
                 for plugin in &model.plugin {
-                    if plugin.name == "slotcar".to_string()
-                        || plugin.filename == "libslotcar.so".to_string()
-                    {
+                    if plugin.name == "slotcar" || plugin.filename == "libslotcar.so" {
                         world
-                            .entity_mut(e)
+                            .entity_mut(root_entity)
                             .insert(DifferentialDrive::from(&plugin.elements))
                             .insert(Battery::from(&plugin.elements))
                             .insert(AmbientSystem::from(&plugin.elements))

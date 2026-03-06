@@ -16,6 +16,7 @@
 */
 
 use crate::exit_confirmation::SiteChanged;
+use crate::undo::{record_change, UndoHistory};
 use bevy::{ecs::component::Mutable, prelude::*};
 use std::fmt::Debug;
 
@@ -72,12 +73,20 @@ fn update_changed_values<T: Component<Mutability = Mutable> + Clone + Debug>(
     mut commands: Commands,
     mut values: Query<&mut T>,
     mut site_changed: ResMut<SiteChanged>,
+    mut undo_history: ResMut<UndoHistory>,
 ) {
     site_changed.0 = true;
     let change = trigger.event();
 
-    if let Ok(mut new_value) = values.get_mut(change.for_element) {
-        *new_value = change.to_value.clone();
+    if let Ok(mut current_value) = values.get_mut(change.for_element) {
+        let old = current_value.clone();
+        record_change(
+            change.for_element,
+            old,
+            change.to_value.clone(),
+            &mut undo_history,
+        );
+        *current_value = change.to_value.clone();
     } else {
         if change.allow_insert {
             commands

@@ -28,9 +28,9 @@ use {
 #[cfg_attr(feature = "bevy", derive(Component))]
 pub struct TaskParams {
     #[serde(default, skip_serializing_if = "is_default")]
-    pub unix_millis_earliest_start_time: Option<i32>,
+    pub unix_millis_earliest_start_time: Option<i64>,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub unix_millis_request_time: Option<i32>,
+    pub unix_millis_request_time: Option<i64>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub priority: Option<serde_json::Value>,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -38,19 +38,19 @@ pub struct TaskParams {
 }
 
 impl TaskParams {
-    pub fn start_time(&self) -> Option<i32> {
-        self.unix_millis_earliest_start_time.clone()
+    pub fn start_time(&self) -> Option<i64> {
+        self.unix_millis_earliest_start_time
     }
 
-    pub fn start_time_mut(&mut self) -> &mut Option<i32> {
+    pub fn start_time_mut(&mut self) -> &mut Option<i64> {
         &mut self.unix_millis_earliest_start_time
     }
 
-    pub fn request_time(&self) -> Option<i32> {
-        self.unix_millis_request_time.clone()
+    pub fn request_time(&self) -> Option<i64> {
+        self.unix_millis_request_time
     }
 
-    pub fn request_time_mut(&mut self) -> &mut Option<i32> {
+    pub fn request_time_mut(&mut self) -> &mut Option<i64> {
         &mut self.unix_millis_request_time
     }
 

@@ -173,6 +173,18 @@ impl Site {
         serde_json::from_slice(s)
     }
 
+    /// Load from JSON bytes, applying any necessary format migrations first.
+    pub fn from_bytes_json_migrated(s: &[u8]) -> serde_json::Result<Self> {
+        let mut value: serde_json::Value = serde_json::from_slice(s)?;
+        let registry = crate::MigrationRegistry::new();
+        if let Err(e) = registry.migrate(&mut value) {
+            // Log migration errors but still attempt to parse, since minor
+            // version bumps are forward-compatible by design.
+            tracing::warn!("Format migration warning: {e}");
+        }
+        serde_json::from_value(value)
+    }
+
     pub fn to_bytes_json(&self) -> serde_json::Result<Vec<u8>> {
         serde_json::to_vec_pretty(self)
     }
