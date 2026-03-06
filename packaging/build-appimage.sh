@@ -47,7 +47,11 @@ if [ -f "./$LINUXDEPLOY" ]; then
     DEPLOY_CMD="./$LINUXDEPLOY"
 fi
 
-OUTPUT="${APP_NAME}-$(uname -m).AppImage" \
-    "$DEPLOY_CMD" --appdir "$APP_DIR" --output appimage
+OUTPUT="${APP_NAME}-$(uname -m).AppImage"
+export OUTPUT
+LDAI_OUTPUT="$OUTPUT"
+export LDAI_OUTPUT
+
+"$DEPLOY_CMD" --appdir "$APP_DIR" --output appimage
 
 echo "==> Done: $OUTPUT"
