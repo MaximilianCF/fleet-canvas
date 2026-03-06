@@ -17,6 +17,7 @@
 
 use crate::{
     site::{AlignSiteDrawings, Delete},
+    undo::{RedoRequest, UndoRequest},
     CreateNewWorkspace, CurrentWorkspace, DebugMode, WorkspaceLoader, WorkspaceSaver,
 };
 use bevy::{prelude::*, window::PrimaryWindow};
@@ -48,6 +49,8 @@ fn handle_keyboard_input(
     primary_windows: Query<Entity, With<PrimaryWindow>>,
     mut workspace_loader: WorkspaceLoader,
     mut workspace_saver: WorkspaceSaver,
+    mut undo_request: EventWriter<UndoRequest>,
+    mut redo_request: EventWriter<RedoRequest>,
 ) {
     let Some(egui_context) = primary_windows
         .single()
@@ -115,6 +118,18 @@ fn handle_keyboard_input(
 
         if keyboard_input.just_pressed(KeyCode::KeyO) {
             workspace_loader.load_from_dialog();
+        }
+
+        if keyboard_input.just_pressed(KeyCode::KeyZ) {
+            if keyboard_input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]) {
+                redo_request.write(RedoRequest);
+            } else {
+                undo_request.write(UndoRequest);
+            }
+        }
+
+        if keyboard_input.just_pressed(KeyCode::KeyY) {
+            redo_request.write(RedoRequest);
         }
     }
 }

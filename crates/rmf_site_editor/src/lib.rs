@@ -63,6 +63,9 @@ use interaction::InteractionPlugin;
 use site::{OSMViewPlugin, SitePlugin};
 use site_asset_io::SiteAssetIoPlugin;
 
+pub mod undo;
+use undo::UndoPlugin;
+
 pub mod mapf_rse;
 use mapf_rse::NegotiationPlugin;
 
@@ -295,6 +298,7 @@ impl Plugin for SiteEditor {
                 InteractionPlugin::new().headless(self.is_headless()),
                 VisualCueAnimationsPlugin,
                 OccupancyPlugin,
+                UndoPlugin,
                 WorkspacePlugin,
                 IssuePlugin,
                 crossflow::CrossflowPlugin::default(),

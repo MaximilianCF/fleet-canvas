@@ -84,7 +84,7 @@ impl LoadSite {
                     }
                 }
             } else if filename.ends_with(".json") {
-                Site::from_bytes_json(data)?
+                Site::from_bytes_json_migrated(data)?
             } else {
                 return Err(LoadSiteError::UnrecognizedFileType(path.clone()));
             };
@@ -98,7 +98,7 @@ impl LoadSite {
 
         // No file type was indicated, so try parsing the data with each option
         // in order of how likely it will be used
-        let site = Site::from_bytes_json(data)
+        let site = Site::from_bytes_json_migrated(data)
             .map_err(|_| LoadSiteError::UnknownDataFormat)
             .or_else(|_| {
                 BuildingMap::from_bytes(data)
