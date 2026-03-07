@@ -123,7 +123,7 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Keyboard: F2/F3/Delete/Debug feedback via toast notifications
 - Keyboard refactored to stay within Bevy 16-param system limit
 
-### v0.0.7 -- Preferences & Human Lanes
+### v0.0.7 -- Graph View, Human Lanes & Polish
 
 **User Preferences Persistence**
 - Window size and last opened file saved to `~/.config/rmf_site_editor/preferences.json`
@@ -136,6 +136,22 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Human lanes render narrower (0.35m vs 0.5m) with orange/amber tint
 - Lane type selector in inspector panel (ComboBox)
 - Persisted in `.site.json`, backward-compatible (defaults to Robot)
+
+**Animated Welcome Screen**
+- Blueprint-style animated background on main menu
+- Drifting grid lines, floating room outlines, waypoint dots with nav lanes
+- All rendered via egui painter at low opacity
+
+**Graph View Mode** (F4 toggle)
+- Hides all geometry (floors, walls, doors, models, lifts) to isolate nav graph
+- Saves and restores previous visibility state on toggle
+- View menu checkbox "Graph View" synced with F4 shortcut
+- Color-coded elements by type in graph view:
+  - Lanes: robot = blue, human = orange
+  - Locations: plain = green, charger = yellow, parking = blue, holding = purple
+- Legend overlay with color key (bottom-left corner)
+- Status bar shows orange "Graph View" indicator when active
+- Normal mode retains nav graph colors (unchanged behavior)
 
 ---
 
