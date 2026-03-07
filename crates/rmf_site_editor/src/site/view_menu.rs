@@ -375,12 +375,27 @@ fn render_graph_view_legend(
             ui.add_space(4.0);
 
             let entries = [
-                ("Lane (Robot)", bevy_egui::egui::Color32::from_rgb(80, 140, 220)),
-                ("Lane (Human)", bevy_egui::egui::Color32::from_rgb(230, 160, 50)),
-                ("Location", bevy_egui::egui::Color32::from_rgb(100, 200, 100)),
+                (
+                    "Lane (Robot)",
+                    bevy_egui::egui::Color32::from_rgb(80, 140, 220),
+                ),
+                (
+                    "Lane (Human)",
+                    bevy_egui::egui::Color32::from_rgb(230, 160, 50),
+                ),
+                (
+                    "Location",
+                    bevy_egui::egui::Color32::from_rgb(100, 200, 100),
+                ),
                 ("Charger", bevy_egui::egui::Color32::from_rgb(255, 220, 50)),
-                ("Parking Spot", bevy_egui::egui::Color32::from_rgb(80, 180, 255)),
-                ("Holding Point", bevy_egui::egui::Color32::from_rgb(200, 120, 255)),
+                (
+                    "Parking Spot",
+                    bevy_egui::egui::Color32::from_rgb(80, 180, 255),
+                ),
+                (
+                    "Holding Point",
+                    bevy_egui::egui::Color32::from_rgb(200, 120, 255),
+                ),
             ];
 
             for (label, color) in entries {

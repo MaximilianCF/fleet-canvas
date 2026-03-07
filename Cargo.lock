@@ -5660,7 +5660,7 @@ dependencies = [
 
 [[package]]
 name = "rmf_site_editor"
-version = "0.0.3"
+version = "0.0.7"
 dependencies = [
  "anyhow",
  "bevy",

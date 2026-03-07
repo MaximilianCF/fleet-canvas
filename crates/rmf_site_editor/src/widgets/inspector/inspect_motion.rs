@@ -58,9 +58,7 @@ impl<'w, 's> WidgetSystem<Inspect> for InspectMotion<'w, 's> {
                     ui.selectable_value(&mut current, LaneType::Human, LaneType::Human.label());
                 });
             if current != *lane_type {
-                params
-                    .commands
-                    .trigger(Change::new(current, selection));
+                params.commands.trigger(Change::new(current, selection));
             }
             ui.add_space(10.0);
         }

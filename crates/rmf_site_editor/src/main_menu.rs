@@ -161,7 +161,9 @@ fn egui_ui(
     mut _app_state: ResMut<State<AppState>>,
     autoload: Option<ResMut<Autoload>>,
     primary_windows: Query<Entity, With<PrimaryWindow>>,
-    #[cfg(not(target_arch = "wasm32"))] prefs: Option<Res<crate::user_preferences::UserPreferences>>,
+    #[cfg(not(target_arch = "wasm32"))] prefs: Option<
+        Res<crate::user_preferences::UserPreferences>,
+    >,
 ) {
     if let Some(mut autoload) = autoload {
         #[cfg(not(target_arch = "wasm32"))]

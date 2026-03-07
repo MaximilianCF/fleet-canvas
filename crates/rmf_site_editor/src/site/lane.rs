@@ -211,9 +211,7 @@ pub fn add_lane_visuals(
                         single_arrow_color: forward_arrow_color(lane_color),
                         double_arrow_color: backward_arrow_color(lane_color),
                         background_color: lane_color,
-                        number_of_arrows: BigF32::new(
-                            (start_anchor - end_anchor).length() / width,
-                        ),
+                        number_of_arrows: BigF32::new((start_anchor - end_anchor).length() / width),
                         speeds: LaneShaderSpeeds {
                             forward: forward_speed_limit,
                             backward: backward_speed_limit,
@@ -379,8 +377,7 @@ pub fn update_lane_type_visuals(
         // Update arrow count for new width
         if let Ok(mat) = lane_materials.get(segments.mid) {
             if let Some(lane_mat) = extended_materials.get_mut(&mat.0) {
-                *lane_mat.extension.number_of_arrows =
-                    (start_anchor - end_anchor).length() / width;
+                *lane_mat.extension.number_of_arrows = (start_anchor - end_anchor).length() / width;
             }
         }
     }

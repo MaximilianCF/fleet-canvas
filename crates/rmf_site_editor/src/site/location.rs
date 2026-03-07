@@ -576,11 +576,7 @@ pub fn update_location_colors_for_graph_view(
         if graph_view.active {
             let material = if tags.0.iter().any(|t| matches!(t, LocationTag::Charger)) {
                 assets.graph_view_charger_material.clone()
-            } else if tags
-                .0
-                .iter()
-                .any(|t| matches!(t, LocationTag::ParkingSpot))
-            {
+            } else if tags.0.iter().any(|t| matches!(t, LocationTag::ParkingSpot)) {
                 assets.graph_view_parking_material.clone()
             } else if tags
                 .0

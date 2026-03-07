@@ -1105,7 +1105,9 @@ fn generate_lanes(
     };
 
     let mut lanes = BTreeMap::new();
-    for (e, edge, o_edge, forward, reverse, affiliation, graphs, lane_id, child_of, lane_type) in &q_lanes {
+    for (e, edge, o_edge, forward, reverse, affiliation, graphs, lane_id, child_of, lane_type) in
+        &q_lanes
+    {
         if child_of.parent() != site {
             continue;
         }
