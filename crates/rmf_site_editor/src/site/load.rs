@@ -830,6 +830,9 @@ pub fn load_site(
                     internal inconsistency:\n{}\n---\nSite Data:\n{:#?}",
                     err.error, &cmd.site,
                 );
+                world
+                    .resource_mut::<crate::widgets::Notifications>()
+                    .error("Failed to load site: file has internal inconsistency");
                 continue;
             }
         };
@@ -837,11 +840,26 @@ pub fn load_site(
             world.entity_mut(site).insert(DefaultFile(path.clone()));
         }
 
+        // Restore the default scenario from the saved data
+        let default_scenario_entity = cmd.site.default_scenario.and_then(|scenario_id| {
+            // Find the entity that was assigned this SiteID during loading
+            let mut state: SystemState<Query<(Entity, &SiteID), With<ScenarioModifiers<Entity>>>> =
+                SystemState::new(world);
+            let scenarios = state.get(world);
+            scenarios
+                .iter()
+                .find(|(_, id)| id.0 == scenario_id)
+                .map(|(e, _)| e)
+        });
+        if default_scenario_entity.is_some() {
+            world.resource_mut::<DefaultScenario>().0 = default_scenario_entity;
+        }
+
         if cmd.focus {
             world.trigger(ChangeCurrentSite {
                 site,
                 level: None,
-                scenario: None,
+                scenario: default_scenario_entity,
             });
         }
     }
@@ -1080,10 +1098,17 @@ fn generate_imported_nav_graphs(
 pub fn import_nav_graph(
     mut params: ImportNavGraphParams,
     mut import_requests: EventReader<ImportNavGraphs>,
+    mut notifications: ResMut<crate::widgets::Notifications>,
 ) {
     for r in import_requests.read() {
-        if let Err(err) = generate_imported_nav_graphs(&mut params, r.into_site, &r.from_site) {
-            error!("Failed to import nav graph: {err}");
+        match generate_imported_nav_graphs(&mut params, r.into_site, &r.from_site) {
+            Ok(()) => {
+                notifications.success("Nav graph imported successfully");
+            }
+            Err(err) => {
+                error!("Failed to import nav graph: {err}");
+                notifications.error(format!("Failed to import nav graph: {err}"));
+            }
         }
     }
 }

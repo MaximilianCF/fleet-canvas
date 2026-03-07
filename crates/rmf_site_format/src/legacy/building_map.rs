@@ -806,6 +806,7 @@ impl BuildingMap {
                 },
             },
             scenarios,
+            default_scenario: None,
             model_instances,
             model_descriptions,
             robots,

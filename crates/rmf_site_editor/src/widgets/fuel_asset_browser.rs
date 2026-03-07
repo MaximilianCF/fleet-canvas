@@ -279,7 +279,13 @@ impl<'w, 's> FuelAssetBrowser<'w, 's> {
                 }
 
                 if let Some(selected) = &gallery_status.selected {
-                    if ui.button("Load as Description").clicked() {
+                    if ui
+                        .button("Load as Description")
+                        .on_hover_text(
+                            "Import this model as a reusable description and place an instance",
+                        )
+                        .clicked()
+                    {
                         if let Some(site_entity) = self.current_workspace.root {
                             let description_name = selected.owner.clone() + "/" + &selected.name;
                             let model_description: ModelDescriptionBundle =
@@ -316,7 +322,11 @@ impl<'w, 's> FuelAssetBrowser<'w, 's> {
                 }
             }
             None => {
-                ui.label("No models found");
+                if gallery_status.fetching_cache {
+                    ui.label("Loading models...");
+                } else {
+                    ui.label("No models found. Try updating the model cache.");
+                }
             }
         }
         ui.add_space(10.0);
@@ -336,17 +346,29 @@ impl<'w, 's> FuelAssetBrowser<'w, 's> {
                 }
             });
         }
-        if ui.add(Button::new("Set API key")).clicked() {
+        if ui
+            .add(Button::new("Set API key"))
+            .on_hover_text("Set your Fuel API key to browse private models")
+            .clicked()
+        {
             gallery_status.show_api_window = true;
         }
         if gallery_status.fetching_cache {
             ui.label("Updating model cache...");
         } else {
-            if ui.add(Button::new("Update model cache")).clicked() {
+            if ui
+                .add(Button::new("Update model cache"))
+                .on_hover_text("Refresh the list of available models from Fuel server")
+                .clicked()
+            {
                 self.update_cache.write(UpdateFuelCache);
             }
         }
-        if ui.add(Button::new("Close")).clicked() {
+        if ui
+            .add(Button::new("Close"))
+            .on_hover_text("Close the asset browser")
+            .clicked()
+        {
             gallery_status.show = false;
         }
     }

@@ -15,13 +15,14 @@
  *
 */
 
-use crate::interaction::{CategoryVisibility, SetCategoryVisibility};
+use crate::interaction::{CategoryVisibility, SetCategoryVisibility, SnapGridConfig};
 use crate::site::{
     CollisionMeshMarker, DoorMarker, FiducialMarker, FloorMarker, LaneMarker, LiftCabin,
     LiftCabinDoorMarker, LocationTags, MeasurementMarker, VisualMeshMarker, WallMarker,
 };
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
+use rmf_site_camera::resources::ProjectionMode;
 use rmf_site_egui::*;
 
 #[derive(SystemParam)]
@@ -44,6 +45,9 @@ pub struct ViewMenuPlugin;
 
 #[derive(Resource)]
 pub struct ViewMenuItems {
+    orthographic: Entity,
+    perspective: Entity,
+    reference_grid: Entity,
     doors: Entity,
     floors: Entity,
     lanes: Entity,
@@ -59,6 +63,28 @@ pub struct ViewMenuItems {
 impl FromWorld for ViewMenuItems {
     fn from_world(world: &mut World) -> Self {
         let view_header = world.resource::<ViewMenu>().get();
+
+        let orthographic = world
+            .spawn(MenuItem::Text(
+                TextMenuItem::new("Orthographic").shortcut("F2"),
+            ))
+            .insert(ChildOf(view_header))
+            .id();
+        let perspective = world
+            .spawn(MenuItem::Text(
+                TextMenuItem::new("Perspective").shortcut("F3"),
+            ))
+            .insert(ChildOf(view_header))
+            .id();
+        let grid_visible = world.resource::<SnapGridConfig>().visible;
+        let reference_grid = world
+            .spawn(MenuItem::CheckBox("Snap Grid".to_string(), grid_visible))
+            .insert(ChildOf(view_header))
+            .id();
+        world
+            .spawn(MenuItem::Separator)
+            .insert(ChildOf(view_header));
+
         let default_visibility = world.resource::<CategoryVisibility<DoorMarker>>();
         let doors = world
             .spawn(MenuItem::CheckBox(
@@ -141,6 +167,9 @@ impl FromWorld for ViewMenuItems {
             .id();
 
         ViewMenuItems {
+            orthographic,
+            perspective,
+            reference_grid,
             doors,
             floors,
             lanes,
@@ -160,6 +189,8 @@ fn handle_view_menu_events(
     view_menu: Res<ViewMenuItems>,
     mut menu_items: Query<&mut MenuItem>,
     mut events: VisibilityEvents,
+    mut projection_mode: ResMut<ProjectionMode>,
+    mut grid_config: ResMut<SnapGridConfig>,
 ) {
     let mut toggle = |entity| {
         let mut menu = menu_items.get_mut(entity).unwrap();
@@ -168,7 +199,13 @@ fn handle_view_menu_events(
         *value
     };
     for event in menu_events.read() {
-        if event.clicked() && event.source() == view_menu.doors {
+        if event.clicked() && event.source() == view_menu.orthographic {
+            *projection_mode = ProjectionMode::Orthographic;
+        } else if event.clicked() && event.source() == view_menu.perspective {
+            *projection_mode = ProjectionMode::Perspective;
+        } else if event.clicked() && event.source() == view_menu.reference_grid {
+            grid_config.visible = toggle(event.source());
+        } else if event.clicked() && event.source() == view_menu.doors {
             events.doors.write(toggle(event.source()).into());
         } else if event.clicked() && event.source() == view_menu.floors {
             events.floors.write(toggle(event.source()).into());

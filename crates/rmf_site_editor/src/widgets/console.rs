@@ -34,7 +34,7 @@ impl Plugin for ConsoleWidgetPlugin {
 }
 
 fn console_widget(In(input): In<PanelWidgetInput>, mut log_history: ResMut<LogHistory>) {
-    egui::TopBottomPanel::bottom("log_consolse")
+    egui::TopBottomPanel::bottom("log_console")
         .resizable(true)
         .min_height(30.0)
         .max_height(300.0)
@@ -78,8 +78,11 @@ fn console_widget(In(input): In<PanelWidgetInput>, mut log_history: ResMut<LogHi
                             ui.checkbox(checked_bevy, "Bevy");
                         };
                         // Copy full log history to clipboard
-                        if ui.button("Copy Log History").clicked() {
+                        if ui.button("Copy Log").clicked() {
                             ui.ctx().copy_text(log_history.copy_log_history());
+                        }
+                        if ui.button("Clear").clicked() {
+                            log_history.clear();
                         }
                         // Slider to adjust display limit
                         let history_size = log_history.log_history().len() as f64;

@@ -18,6 +18,11 @@
 pub mod anchor;
 pub use anchor::*;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod auto_backup;
+#[cfg(not(target_arch = "wasm32"))]
+pub use auto_backup::*;
+
 pub mod assets;
 pub use assets::*;
 
@@ -340,6 +345,7 @@ impl Plugin for SitePlugin {
             "Fiducial without affiliation",
         )
         .add_issue_type(&DUPLICATED_DOCK_NAME_ISSUE_UUID, "Duplicated dock name")
+        .add_issue_type(&DUPLICATED_LOCATION_NAME_ISSUE_UUID, "Duplicate location name")
         .add_issue_type(&UNCONNECTED_ANCHORS_ISSUE_UUID, "Unconnected anchors")
         .add_systems(Update, (load_site, import_nav_graph))
         .add_systems(
@@ -352,6 +358,7 @@ impl Plugin for SitePlugin {
                 check_for_duplicated_door_names,
                 check_for_duplicated_lift_names,
                 check_for_duplicated_dock_names,
+                check_for_duplicated_location_names,
                 check_for_fiducials_without_affiliation,
                 check_for_close_unconnected_anchors,
                 check_for_orphan_model_instances,
@@ -488,5 +495,8 @@ impl Plugin for SitePlugin {
         .add_observer(on_change_site)
         .add_observer(handle_inclusion_change_for_model_visibility)
         .add_observer(handle_on_level_change);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        app.add_plugins(AutoBackupPlugin);
     }
 }

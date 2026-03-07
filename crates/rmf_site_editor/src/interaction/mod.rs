@@ -92,6 +92,9 @@ pub use select_impl::*;
 pub mod snap;
 pub use snap::*;
 
+pub mod grid;
+pub use grid::*;
+
 pub mod user_camera;
 pub use user_camera::*;
 
@@ -185,6 +188,7 @@ impl Plugin for InteractionPlugin {
                 AnchorSelectionPlugin::default(),
                 ObjectPlacementPlugin::default(),
                 SelectionPlugin::<InspectorService>::default(),
+                SnapGridPlugin,
             ));
 
         if !self.headless {

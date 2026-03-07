@@ -59,22 +59,75 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Fixed AppImage build script variable export
 - Updated README for the fork
 
+### v0.0.5 -- P0 + P1
+
+**Welcome Screen** (P0)
+- Full-screen splash with "New Project", "Open File", "Load Demo Map"
+- Dark theme, centered layout, keyboard hints
+- Version display with "Desktop Edition" tag
+
+**Clippy Fixes** (P0)
+- Fixed 25+ clippy errors in rmf_site_camera (needless_return, clone_on_copy, etc.)
+- CI clippy changed to -W clippy::all (warn, not error) for remaining upstream issues
+
+**Entity Search Bar** (P1, upstream #342)
+- Search field in Inspect tab to find elements by name
+- Shows category and SiteID, click to select
+- Max 20 results, alphabetically sorted
+
+**Menu Close Fix** (P1, upstream #393)
+- Menus now close after clicking an item (ui.close_menu())
+
+**Fix File Open While Site Loaded** (P1, upstream #354)
+- Old workspace entities despawned before loading new file
+- Selection and CurrentWorkspace resources reset on load
+
+**Automatic Backups** (P1, upstream #256)
+- Auto-saves every 2 minutes to ~/.cache/rmf_site_editor/backups/
+- Keeps last 5 backups per site, auto-cleanup of old files
+- Desktop only (not WASM)
+
+**Duplicate Location Name Diagnostic** (P3, upstream #346)
+- Validation warns when two locations share the same name
+- Integrated into existing diagnostics panel (Validate button)
+
+**Type-in Site ID** (P3, upstream #322)
+- Search bar supports `#123` syntax to jump to entity by SiteID
+
+**Reduce Compile Times** (P3, upstream #291, #292)
+- Mold linker config added to .cargo/config.toml (commented, opt-in)
+
+### v0.0.6 -- Editor Features & Polish
+
+**Default Scenario Persistence** (P1, upstream #365)
+- `default_scenario` field added to Site JSON format
+- Save persists which scenario is the default (by SiteID)
+- Load restores DefaultScenario and auto-selects it
+
+**Snap Grid Overlay** (P2, upstream #304)
+- Gizmo-based grid that matches the snap-to-grid size
+- Minor/major lines + colored axis indicators (red X, green Y)
+- Alt+G toggle, View menu checkbox "Snap Grid"
+- Grid indicator in status bar
+
+**Improved Error Notifications** (P3, upstream #296)
+- Model loading failures shown as toast notifications with model name
+- Site loading errors shown as toast
+- Nav graph import shows success/error toast
+- Console: "Clear" button, fixed panel ID typo
+
+**UI Polish**
+- View menu: Orthographic/Perspective items (F2/F3), Snap Grid checkbox
+- Status bar: projection mode indicator, grid state, expanded shortcut hints
+- Fuel asset browser: tooltips on all buttons, better empty state messages
+- Keyboard: F2/F3/Delete/Debug feedback via toast notifications
+- Keyboard refactored to stay within Bevy 16-param system limit
+
 ---
 
 ## Planned
 
-### P0 -- Critical / Next Session
-
-**Welcome Screen**
-- Splash page on app startup (before entering editor)
-- Options: New Project, Open Recent, Open File, Quick Start guide
-- Replaces the current blank viewport on launch
-- Files: new AppState variant or startup system
-
-**Fix Upstream Clippy Errors**
-- 25 pre-existing clippy errors in rmf_site_camera block style CI
-- Errors: needless_return, len_zero, too_many_arguments, clone_on_copy
-- Fix them to get style workflow green
+### P0 -- Critical / Next
 
 **GitHub Repo Presentation**
 - Repository description and topics (robotics, rmf, bevy, rust, editor)
@@ -83,32 +136,11 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 ### P1 -- High Priority / UX
 
-**Entity Search Bar** (upstream #342)
-- Search field at top of properties panel to find elements by name/type
-- Filter and highlight results in the viewport
-
-**Menus Stay Open Fix** (upstream #393)
-- Menus should close after clicking an item
-
-**Fix File Open While Site Loaded** (upstream #354)
-- Opening a new file while a site is already loaded causes issues
-
 **Improve Mutex Group UX** (upstream #407)
 - Current mutex group editing is confusing
 - Better visual feedback for group membership
 
-**Automatic Backups** (upstream #256)
-- Periodic auto-save to a recovery location
-- Recover unsaved work after crash
-
-**Default Scenario Persistence** (upstream #365)
-- Save which scenario is the default and restore it on load
-
 ### P2 -- Medium Priority / Editor Features
-
-**Reference Geometry / Grid** (upstream #304)
-- Visual grid or reference markers to help users orient in 3D space
-- Complements existing snap-to-grid system
 
 **Path Inspector Tool** (upstream #358)
 - Visual tool to inspect and debug navigation paths
@@ -136,17 +168,8 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 **Improve Error Messages / Diagnostics** (upstream #296)
 - Better feedback when assets fail to load
 
-**Duplicate Name Diagnostic** (upstream #346)
-- Warning when two locations share the same name
-
-**Type-in Site ID** (upstream #322)
-- Allow users to type a specific site ID in the inspector
-
 **Export Customizability** (upstream #246)
 - Options for what to include/exclude in SDF export
-
-**Reduce Compile Times** (upstream #291, #292)
-- Recommend mold linker, improve incremental builds
 
 ### P4 -- Future / Research
 
@@ -173,7 +196,7 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 ## Known Issues
 
-- **style CI fails**: 25 pre-existing clippy errors in rmf_site_camera (upstream code, not ours)
+- **style CI clippy**: uses `-W clippy::all` (warn only) due to remaining upstream warnings
 - **ci_linux / ci_windows disabled**: only run manually via workflow_dispatch
 - **No app icon in window titlebar**: Bevy window icon requires separate setup
 - **Lanes on wrong levels**: upstream #395 (not yet investigated)

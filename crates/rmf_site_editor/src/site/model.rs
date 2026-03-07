@@ -401,6 +401,8 @@ fn handle_model_loading_errors(
     scene_roots: Query<(&SceneRoot, Option<&SceneInstance>)>,
     mut scene_spawner: ResMut<SceneSpawner>,
     mut delete: EventWriter<Delete>,
+    mut notifications: ResMut<crate::widgets::Notifications>,
+    names: Query<&NameInSite>,
 ) -> ModelLoadingResult {
     let parent = match &result {
         Ok(success) => success.request.parent,
@@ -417,6 +419,8 @@ fn handle_model_loading_errors(
                 commands.entity(parent).remove::<ModelScene>();
             }
             error!("{err}");
+            let name = names.get(parent).map(|n| n.0.as_str()).unwrap_or("unknown");
+            notifications.error(format!("Failed to load model \"{name}\""));
             if let Ok(mut entity_mut) = commands.get_entity(parent) {
                 // The parent entity might not exist any longer after the loading
                 // failed, so we check for its existence before inserting to it.

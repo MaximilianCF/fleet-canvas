@@ -1696,6 +1696,12 @@ pub fn generate_site(
     let model_instances = generate_model_instances(site, world)?;
     let scenarios = generate_scenarios(site, world)?;
     let tasks = generate_tasks(site, world)?;
+    let default_scenario = {
+        let default = world.resource::<DefaultScenario>();
+        default
+            .0
+            .and_then(|entity| world.get::<SiteID>(entity).map(|id| id.0))
+    };
 
     let extensions = world.resource_scope::<ExtensionHooks, _>(|world, mut hooks| {
         let mut extensions = Extensions::default();
@@ -1757,6 +1763,7 @@ pub fn generate_site(
         robots,
         model_instances,
         scenarios,
+        default_scenario,
         tasks,
         extensions,
     });

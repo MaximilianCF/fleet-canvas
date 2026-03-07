@@ -158,6 +158,10 @@ impl Default for LogHistory {
 }
 
 impl LogHistory {
+    pub fn clear(&mut self) {
+        self.log_history.clear();
+    }
+
     pub fn copy_log_history(&self) -> String {
         let mut output_string = String::new();
 

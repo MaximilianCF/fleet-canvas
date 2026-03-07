@@ -141,6 +141,9 @@ pub struct Site {
     /// Scenarios that exist in the site
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub scenarios: BTreeMap<u32, Scenario<u32>>,
+    /// The ID of the default scenario to load on startup
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_scenario: Option<u32>,
     /// Model descriptions available in this site
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub model_descriptions: BTreeMap<u32, ModelDescriptionBundle>,

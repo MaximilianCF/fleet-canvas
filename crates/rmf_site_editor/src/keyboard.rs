@@ -16,7 +16,7 @@
 */
 
 use crate::{
-    interaction::SnapToGrid,
+    interaction::{SnapGridConfig, SnapToGrid},
     site::{AlignSiteDrawings, Delete},
     undo::{RedoRequest, UndoRequest},
     widgets::Notifications,
@@ -34,7 +34,7 @@ pub struct EditorInputPlugin;
 impl Plugin for EditorInputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DebugMode>()
-            .add_systems(Last, handle_keyboard_input);
+            .add_systems(Last, (handle_keyboard_input, handle_keyboard_extras));
     }
 }
 
@@ -45,8 +45,6 @@ fn handle_keyboard_input(
     mut delete: EventWriter<Delete>,
     mut new_workspace: EventWriter<CreateNewWorkspace>,
     mut projection_mode: ResMut<ProjectionMode>,
-    mut debug_mode: ResMut<DebugMode>,
-    mut align_site: EventWriter<AlignSiteDrawings>,
     current_workspace: Res<CurrentWorkspace>,
     primary_windows: Query<Entity, With<PrimaryWindow>>,
     mut workspace_loader: WorkspaceLoader,
@@ -55,6 +53,7 @@ fn handle_keyboard_input(
     mut redo_request: EventWriter<RedoRequest>,
     mut snap: ResMut<SnapToGrid>,
     mut notifications: ResMut<Notifications>,
+    mut grid_config: ResMut<SnapGridConfig>,
 ) {
     let Some(egui_context) = primary_windows
         .single()
@@ -73,10 +72,12 @@ fn handle_keyboard_input(
 
     if keyboard_input.just_pressed(KeyCode::F2) {
         *projection_mode = ProjectionMode::Orthographic;
+        notifications.success("Projection: Orthographic");
     }
 
     if keyboard_input.just_pressed(KeyCode::F3) {
         *projection_mode = ProjectionMode::Perspective;
+        notifications.success("Projection: Perspective");
     }
 
     if keyboard_input.just_pressed(KeyCode::Delete)
@@ -85,14 +86,11 @@ fn handle_keyboard_input(
         if let Some(selection) = selection.0 {
             delete.write(Delete::new(selection));
         } else {
-            warn!("No selected entity to delete");
+            notifications.error("No entity selected to delete");
         }
     }
 
-    if keyboard_input.just_pressed(KeyCode::KeyD) {
-        debug_mode.0 = !debug_mode.0;
-        info!("Toggling debug mode: {debug_mode:?}");
-    }
+    // Debug mode and align handled in handle_keyboard_extras
 
     if keyboard_input.just_pressed(KeyCode::KeyG) {
         if keyboard_input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]) {
@@ -104,6 +102,11 @@ fn handle_keyboard_input(
                 .unwrap_or(0);
             snap.grid_size = SnapToGrid::PRESETS[idx];
             notifications.success(format!("Grid size: {}m", snap.grid_size));
+        } else if keyboard_input.any_pressed([KeyCode::AltLeft, KeyCode::AltRight]) {
+            // Toggle reference grid
+            grid_config.visible = !grid_config.visible;
+            let state = if grid_config.visible { "ON" } else { "OFF" };
+            notifications.success(format!("Reference grid: {state}"));
         } else {
             snap.enabled = !snap.enabled;
             let state = if snap.enabled { "ON" } else { "OFF" };
@@ -121,11 +124,7 @@ fn handle_keyboard_input(
             }
         }
 
-        if keyboard_input.just_pressed(KeyCode::KeyT) {
-            if let Some(site) = current_workspace.root {
-                align_site.write(AlignSiteDrawings(site));
-            }
-        }
+        // Ctrl+T align handled in handle_keyboard_extras
 
         if keyboard_input.just_pressed(KeyCode::KeyE) {
             workspace_saver.export_sdf_to_dialog();
@@ -151,6 +150,42 @@ fn handle_keyboard_input(
 
         if keyboard_input.just_pressed(KeyCode::KeyY) {
             redo_request.write(RedoRequest);
+        }
+    }
+}
+
+/// Separate system for debug mode and align, to stay within Bevy's 16-param limit.
+fn handle_keyboard_extras(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut egui_context: EguiContexts,
+    mut debug_mode: ResMut<DebugMode>,
+    mut align_site: EventWriter<AlignSiteDrawings>,
+    current_workspace: Res<CurrentWorkspace>,
+    primary_windows: Query<Entity, With<PrimaryWindow>>,
+    mut notifications: ResMut<Notifications>,
+) {
+    let Some(egui_context) = primary_windows
+        .single()
+        .ok()
+        .and_then(|w| egui_context.try_ctx_for_entity_mut(w))
+    else {
+        return;
+    };
+    if egui_context.wants_keyboard_input() {
+        return;
+    }
+
+    if keyboard_input.just_pressed(KeyCode::KeyD) {
+        debug_mode.0 = !debug_mode.0;
+        let state = if debug_mode.0 { "ON" } else { "OFF" };
+        notifications.success(format!("Debug mode: {state}"));
+    }
+
+    if keyboard_input.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight]) {
+        if keyboard_input.just_pressed(KeyCode::KeyT) {
+            if let Some(site) = current_workspace.root {
+                align_site.write(AlignSiteDrawings(site));
+            }
         }
     }
 }

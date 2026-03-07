@@ -79,6 +79,9 @@ use rmf_site_egui::*;
 use rmf_site_picking::{Hover, SelectionServiceStages, UiFocused};
 pub use sdf_export_menu::*;
 
+pub mod search_bar;
+use search_bar::*;
+
 pub mod selector_widget;
 pub use selector_widget::*;
 
@@ -147,6 +150,7 @@ impl Plugin for StandardPropertiesPanelPlugin {
             ViewNavGraphsPlugin::default(),
             ViewLayersPlugin::default(),
             StandardTasksPlugin::default(),
+            SearchBarPlugin::default(),
             StandardInspectorPlugin::default(),
             ViewGroupsPlugin::default(),
             ViewLightsPlugin::default(),

@@ -24,6 +24,7 @@ use crate::interaction::InteractionState;
 use crate::site::{DefaultFile, ImportNavGraphs, LoadSite, LoadSiteResult, SaveSite};
 use crate::AppState;
 use rmf_site_format::{NameOfSite, Site};
+use rmf_site_picking::Selection;
 
 /// Used as an event to command that a new workspace should be made the current one
 #[derive(Clone, Copy, Debug, Event)]
@@ -109,12 +110,26 @@ pub fn dispatch_new_workspace_events(
 }
 
 /// Service that takes workspace data and loads a site / workcell, as well as transition state.
+/// Despawns any existing workspace before loading the new one to avoid stale entities.
 pub fn send_load_workspace_files(
     In(BlockingService { mut request, .. }): BlockingServiceInput<LoadSite>,
     mut app_state: ResMut<NextState<AppState>>,
     mut interaction_state: ResMut<NextState<InteractionState>>,
     mut load_site: EventWriter<LoadSite>,
+    mut commands: Commands,
+    current_workspace: Res<CurrentWorkspace>,
+    open_sites: Query<Entity, With<WorkspaceMarker>>,
 ) {
+    // Despawn all existing workspace entities before loading the new one
+    if current_workspace.root.is_some() {
+        for site_entity in open_sites.iter() {
+            commands.entity(site_entity).despawn();
+        }
+        // Clear stale references
+        commands.insert_resource(CurrentWorkspace::default());
+        commands.insert_resource(Selection::default());
+    }
+
     app_state.set(AppState::SiteEditor);
     interaction_state.set(InteractionState::Enable);
 

@@ -1,7 +1,11 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
+use rmf_site_camera::resources::ProjectionMode;
 
-use crate::{interaction::SnapToGrid, AppState};
+use crate::{
+    interaction::{SnapGridConfig, SnapToGrid},
+    AppState,
+};
 
 use super::RenderUiSet;
 
@@ -28,6 +32,8 @@ fn render_status_bar(
     mut contexts: EguiContexts,
     cursor_pos: Res<CursorWorldPosition>,
     snap: Res<SnapToGrid>,
+    projection_mode: Res<ProjectionMode>,
+    grid_config: Res<SnapGridConfig>,
 ) {
     egui::TopBottomPanel::bottom("status_bar")
         .exact_height(22.0)
@@ -46,6 +52,19 @@ fn render_status_bar(
 
                 ui.separator();
 
+                // Projection mode indicator
+                let mode_text = match *projection_mode {
+                    ProjectionMode::Orthographic => "Ortho",
+                    ProjectionMode::Perspective => "Persp",
+                };
+                ui.label(
+                    egui::RichText::new(mode_text)
+                        .small()
+                        .color(egui::Color32::from_rgb(140, 180, 220)),
+                );
+
+                ui.separator();
+
                 // Snap indicator
                 let snap_text = if snap.enabled {
                     format!("Snap: {}m", snap.grid_size)
@@ -61,10 +80,27 @@ fn render_status_bar(
 
                 ui.separator();
 
+                // Grid indicator
+                let grid_text = if grid_config.visible {
+                    "Grid: ON"
+                } else {
+                    "Grid: OFF"
+                };
+                let grid_color = if grid_config.visible {
+                    egui::Color32::from_rgb(140, 180, 220)
+                } else {
+                    egui::Color32::from_rgb(160, 160, 160)
+                };
+                ui.label(egui::RichText::new(grid_text).small().color(grid_color));
+
+                ui.separator();
+
                 ui.label(
-                    egui::RichText::new("[G] toggle snap  [Shift+G] cycle grid")
-                        .small()
-                        .weak(),
+                    egui::RichText::new(
+                        "[G] snap  [Shift+G] size  [Alt+G] grid  [F2] ortho  [F3] persp  [Del] delete",
+                    )
+                    .small()
+                    .weak(),
                 );
             });
         });
