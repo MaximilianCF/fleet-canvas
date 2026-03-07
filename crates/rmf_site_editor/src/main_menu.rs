@@ -29,6 +29,7 @@ fn egui_ui(
     mut _app_state: ResMut<State<AppState>>,
     autoload: Option<ResMut<Autoload>>,
     primary_windows: Query<Entity, With<PrimaryWindow>>,
+    #[cfg(not(target_arch = "wasm32"))] prefs: Option<Res<crate::user_preferences::UserPreferences>>,
 ) {
     if let Some(mut autoload) = autoload {
         #[cfg(not(target_arch = "wasm32"))]
@@ -95,6 +96,25 @@ fn egui_ui(
                         .min_size(egui::vec2(button_width, button_height));
                     if ui.add(open_btn).clicked() {
                         workspace_loader.load_from_dialog();
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    if let Some(prefs) = &prefs {
+                        if let Some(last_file) = &prefs.last_file {
+                            let filename = last_file
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("recent file");
+                            let label = format!("Open Recent: {filename}");
+                            let recent_btn =
+                                egui::Button::new(egui::RichText::new(&label).size(14.0))
+                                    .min_size(egui::vec2(button_width, button_height))
+                                    .fill(egui::Color32::from_rgb(45, 50, 55));
+                            let path = last_file.clone();
+                            if ui.add(recent_btn).clicked() {
+                                let _ = workspace_loader.load_from_path(path);
+                            }
+                        }
                     }
 
                     let demo_btn =

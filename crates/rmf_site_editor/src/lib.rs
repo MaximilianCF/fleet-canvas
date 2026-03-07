@@ -66,6 +66,11 @@ use site_asset_io::SiteAssetIoPlugin;
 pub mod undo;
 use undo::UndoPlugin;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod user_preferences;
+#[cfg(not(target_arch = "wasm32"))]
+use user_preferences::*;
+
 pub mod mapf_rse;
 use mapf_rse::NegotiationPlugin;
 
@@ -244,11 +249,16 @@ impl Plugin for SiteEditor {
                 })
                 .disable::<bevy::winit::WinitPlugin>()
         } else {
+            #[cfg(not(target_arch = "wasm32"))]
+            let resolution = {
+                let prefs = UserPreferences::load();
+                (prefs.window_width, prefs.window_height).into()
+            };
             plugins.set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "RMF Site Editor".to_owned(),
                     #[cfg(not(target_arch = "wasm32"))]
-                    resolution: (1600., 900.).into(),
+                    resolution,
                     #[cfg(target_arch = "wasm32")]
                     canvas: Some(String::from("#rmf_site_editor_canvas")),
                     #[cfg(target_arch = "wasm32")]
@@ -328,6 +338,9 @@ impl Plugin for SiteEditor {
                 // Note order matters, plugins that edit the menus must be initialized after the UI
                 .add_plugins((site::ViewMenuPlugin, OSMViewPlugin, SiteWireframePlugin))
                 .add_plugins(NegotiationPlugin::default());
+
+            #[cfg(not(target_arch = "wasm32"))]
+            app.add_plugins(UserPreferencesPlugin);
         }
 
         if self.is_headless_export() {
