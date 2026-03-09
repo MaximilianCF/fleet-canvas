@@ -155,16 +155,7 @@ fn render_tabbed_panel(
         }
     }
 
-    // Thin accent line below active tab
-    let rect = ui.available_rect_before_wrap();
-    ui.painter().line_segment(
-        [
-            egui::pos2(rect.left(), rect.top()),
-            egui::pos2(rect.right(), rect.top()),
-        ],
-        egui::Stroke::new(1.0, egui::Color32::from_rgb(60, 70, 90)),
-    );
-    ui.add_space(2.0);
+    ui.separator();
 
     // Filter children by active tab; also render children without a tab (untagged)
     let active = world

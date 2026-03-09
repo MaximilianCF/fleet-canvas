@@ -120,7 +120,7 @@ use bevy::{
     },
     prelude::*,
 };
-use bevy_egui::egui::{self, CollapsingHeader, Ui};
+use bevy_egui::egui::{self, Ui};
 use rmf_site_egui::*;
 use rmf_site_format::*;
 use smallvec::SmallVec;

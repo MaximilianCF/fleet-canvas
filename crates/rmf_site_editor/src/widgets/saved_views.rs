@@ -37,7 +37,6 @@ pub struct SavedViews<'w, 's> {
     children_q: Query<'w, 's, &'static Children>,
     current_level: Res<'w, CurrentLevel>,
     active_cam: ActiveCameraQuery<'w, 's>,
-    transforms: Query<'w, 's, &'static Transform>,
     state: ResMut<'w, SavedViewsState>,
 }
 

@@ -52,7 +52,6 @@ fn handle_keyboard_input(
     mut egui_context: EguiContexts,
     mut new_workspace: EventWriter<CreateNewWorkspace>,
     mut projection_mode: ResMut<ProjectionMode>,
-    current_workspace: Res<CurrentWorkspace>,
     primary_windows: Query<Entity, With<PrimaryWindow>>,
     mut workspace_loader: WorkspaceLoader,
     mut workspace_saver: WorkspaceSaver,
