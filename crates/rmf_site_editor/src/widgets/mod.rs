@@ -82,6 +82,12 @@ use rmf_site_egui::*;
 use rmf_site_picking::{Hover, SelectionServiceStages, UiFocused};
 pub use sdf_export_menu::*;
 
+pub mod nearby_elements;
+use nearby_elements::*;
+
+pub mod saved_views;
+use saved_views::*;
+
 pub mod search_bar;
 use search_bar::*;
 
@@ -89,7 +95,7 @@ pub mod selector_widget;
 pub use selector_widget::*;
 
 pub mod status_bar;
-use status_bar::*;
+pub use status_bar::*;
 
 pub mod tasks;
 pub use tasks::*;
@@ -158,6 +164,8 @@ impl Plugin for StandardPropertiesPanelPlugin {
             ViewGroupsPlugin::default(),
             ViewLightsPlugin::default(),
             BuildingPreviewPlugin::default(),
+            SavedViewsPlugin::default(),
+            NearbyElementsPlugin::default(),
         ));
     }
 }

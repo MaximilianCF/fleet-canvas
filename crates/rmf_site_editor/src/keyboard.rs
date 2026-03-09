@@ -16,7 +16,9 @@
 */
 
 use crate::{
-    interaction::{SnapGridConfig, SnapToGrid},
+    interaction::{
+        CopyProperties, MeasureTool, MultiSelection, PasteProperties, SnapGridConfig, SnapToGrid,
+    },
     site::{AlignSiteDrawings, Delete, ToggleNavGraphView, ViewMenuItems},
     undo::{RedoRequest, UndoRequest},
     widgets::{Notifications, SdfExportDialogState},
@@ -34,16 +36,20 @@ pub struct EditorInputPlugin;
 
 impl Plugin for EditorInputPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<DebugMode>()
-            .add_systems(Last, (handle_keyboard_input, handle_keyboard_extras));
+        app.init_resource::<DebugMode>().add_systems(
+            Last,
+            (
+                handle_keyboard_input,
+                handle_keyboard_extras,
+                handle_keyboard_tools,
+            ),
+        );
     }
 }
 
 fn handle_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    selection: Res<Selection>,
     mut egui_context: EguiContexts,
-    mut delete: EventWriter<Delete>,
     mut new_workspace: EventWriter<CreateNewWorkspace>,
     mut projection_mode: ResMut<ProjectionMode>,
     current_workspace: Res<CurrentWorkspace>,
@@ -82,17 +88,7 @@ fn handle_keyboard_input(
         notifications.success("Projection: Perspective");
     }
 
-    if keyboard_input.just_pressed(KeyCode::Delete)
-        || keyboard_input.just_pressed(KeyCode::Backspace)
-    {
-        if let Some(selection) = selection.0 {
-            delete.write(Delete::new(selection));
-        } else {
-            notifications.error("No entity selected to delete");
-        }
-    }
-
-    // Debug mode and align handled in handle_keyboard_extras
+    // Delete and debug mode handled in handle_keyboard_extras
 
     if keyboard_input.just_pressed(KeyCode::KeyG) {
         if keyboard_input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]) {
@@ -156,7 +152,7 @@ fn handle_keyboard_input(
     }
 }
 
-/// Separate system for debug mode, align, and graph view, to stay within Bevy's 16-param limit.
+/// Separate system for debug mode, align, graph view, and delete to stay within Bevy's 16-param limit.
 fn handle_keyboard_extras(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut egui_context: EguiContexts,
@@ -168,6 +164,9 @@ fn handle_keyboard_extras(
     mut notifications: ResMut<Notifications>,
     view_menu: Option<Res<ViewMenuItems>>,
     mut menu_items: Query<&mut MenuItem>,
+    selection: Res<Selection>,
+    mut multi: ResMut<MultiSelection>,
+    mut delete: EventWriter<Delete>,
 ) {
     let Some(egui_context) = primary_windows
         .single()
@@ -178,6 +177,24 @@ fn handle_keyboard_extras(
     };
     if egui_context.wants_keyboard_input() {
         return;
+    }
+
+    if keyboard_input.just_pressed(KeyCode::Delete)
+        || keyboard_input.just_pressed(KeyCode::Backspace)
+    {
+        let all = multi.all_with_primary(&selection);
+        if all.is_empty() {
+            notifications.error("No entity selected to delete");
+        } else {
+            let count = all.len();
+            for entity in all {
+                delete.write(Delete::new(entity));
+            }
+            multi.clear();
+            if count > 1 {
+                notifications.success(format!("Deleted {count} entities"));
+            }
+        }
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyD) {
@@ -205,6 +222,61 @@ fn handle_keyboard_extras(
                 align_site.write(AlignSiteDrawings(site));
             }
         }
+    }
+}
+
+/// Handles measurement tool toggle, properties copy/paste, and Escape for measurement cancel.
+fn handle_keyboard_tools(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut egui_context: EguiContexts,
+    primary_windows: Query<Entity, With<PrimaryWindow>>,
+    mut measure_tool: ResMut<MeasureTool>,
+    mut copy_events: EventWriter<CopyProperties>,
+    mut paste_events: EventWriter<PasteProperties>,
+    mut notifications: ResMut<Notifications>,
+) {
+    let Some(egui_context) = primary_windows
+        .single()
+        .ok()
+        .and_then(|w| egui_context.try_ctx_for_entity_mut(w))
+    else {
+        return;
+    };
+    if egui_context.wants_keyboard_input() {
+        return;
+    }
+
+    // [M] toggle measurement tool
+    if keyboard_input.just_pressed(KeyCode::KeyM) {
+        measure_tool.toggle();
+        let state = if measure_tool.active { "ON" } else { "OFF" };
+        notifications.success(format!("Measure tool: {state}"));
+    }
+
+    // Escape cancels measurement in progress
+    if keyboard_input.just_pressed(KeyCode::Escape) && measure_tool.active {
+        if measure_tool.point_a.is_some() {
+            measure_tool.reset();
+        } else {
+            measure_tool.active = false;
+            notifications.success("Measure tool: OFF");
+        }
+    }
+
+    // Ctrl+Shift+C: copy properties
+    if keyboard_input.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight])
+        && keyboard_input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+        && keyboard_input.just_pressed(KeyCode::KeyC)
+    {
+        copy_events.write(CopyProperties);
+    }
+
+    // Ctrl+Shift+V: paste properties
+    if keyboard_input.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight])
+        && keyboard_input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+        && keyboard_input.just_pressed(KeyCode::KeyV)
+    {
+        paste_events.write(PasteProperties);
     }
 }
 

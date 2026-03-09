@@ -120,7 +120,7 @@ use bevy::{
     },
     prelude::*,
 };
-use bevy_egui::egui::{CollapsingHeader, Ui};
+use bevy_egui::egui::{self, CollapsingHeader, Ui};
 use rmf_site_egui::*;
 use rmf_site_format::*;
 use smallvec::SmallVec;
@@ -350,6 +350,19 @@ impl<'w, 's> WidgetSystem<Tile> for Inspector<'w, 's> {
             ui.label("ERROR: Selection resource is not available");
             return;
         };
+
+        // Show multi-selection count if applicable
+        if let Some(multi) = world.get_resource::<crate::interaction::MultiSelection>() {
+            let count = multi.count();
+            if count > 1 {
+                ui.label(
+                    egui::RichText::new(format!("{count} entities selected (Ctrl+Click)"))
+                        .small()
+                        .weak(),
+                );
+                ui.add_space(4.0);
+            }
+        }
 
         let Some(mut selection) = selection.0 else {
             ui.add_space(8.0);

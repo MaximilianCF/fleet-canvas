@@ -89,6 +89,15 @@ pub use preview::*;
 pub mod select_impl;
 pub use select_impl::*;
 
+pub mod measure;
+pub use measure::*;
+
+pub mod multi_select;
+pub use multi_select::*;
+
+pub mod properties_clipboard;
+pub use properties_clipboard::*;
+
 pub mod snap;
 pub use snap::*;
 
@@ -189,6 +198,9 @@ impl Plugin for InteractionPlugin {
                 ObjectPlacementPlugin::default(),
                 SelectionPlugin::<InspectorService>::default(),
                 SnapGridPlugin,
+                MultiSelectPlugin,
+                MeasureToolPlugin,
+                PropertiesClipboardPlugin,
             ));
 
         if !self.headless {

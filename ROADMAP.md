@@ -153,16 +153,58 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Status bar shows orange "Graph View" indicator when active
 - Normal mode retains nav graph colors (unchanged behavior)
 
+### v0.0.8 -- P2/P3 Features & Repo Polish
+
+**P3: Panel Declutter**
+- Light inspector: Color + Intensity upfront, advanced under collapsing header
+- Pose inspector: Yaw inline, rotation mode under collapsing header
+- Anchor inspector: Dependencies under collapsing header with count
+
+**P3: Improved Error Messages**
+- All save/export error paths now show actionable toast notifications
+- Model loading failures show model name and reason
+- Drawing load failures show toast
+- Warning toast variant (amber) added to notification system
+
+**P3: Export Customizability**
+- SDF export options dialog (Ctrl+E): choose models, doors, lifts, lights
+- ROS 2 launch file generation toggle
+- `SdfExportConfig` in format crate, `to_sdf_with_config()` method
+
+**P2: Saved Views** (upstream #217)
+- Save/restore named camera positions per level
+- Widget in "Site" tab with Save/Go/Rename/Delete
+- Data persists in `.site.json` via `UserCameraPose`
+
+**P2: Nearby Elements** (upstream #195)
+- "Inspect" tab widget showing entities near cursor
+- Configurable radius, sorted by distance, click to select
+
+**P2: Multi-Select**
+- Ctrl+Click to additively select entities
+- Visual cue via `support_selected` system
+- Delete and Edit menu operate on all selected
+- Inspector shows count when multiple selected
+
+**P2: Measurement Tool**
+- [M] key toggles tool, click two points to measure distance
+- Gizmo line visualization (cyan), distance in toast and status bar
+- Escape cancels, results persist until next measurement
+
+**P2: Properties Copy/Paste**
+- Ctrl+Shift+C copies Pose/Scale/IsStatic from selected entity
+- Ctrl+Shift+V pastes to target entity (via Change events, undo-compatible)
+- Edit menu items with enable/disable logic
+
+**P0: GitHub Repo Presentation**
+- README rewritten with full feature list, keyboard shortcuts, project structure
+- Social preview image (1280x640 SVG+PNG)
+- Setup script for GitHub description and topics (docs/setup-github.sh)
+- Screenshots directory created (docs/screenshots/)
+
 ---
 
 ## Planned
-
-### P0 -- Critical / Next
-
-**GitHub Repo Presentation**
-- Repository description and topics (robotics, rmf, bevy, rust, editor)
-- Social preview image for link sharing
-- Add screenshots to README (editor with a loaded site)
 
 ### P1 -- High Priority / UX
 
@@ -171,10 +213,6 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Better visual feedback for group membership
 
 ### P2 -- Medium Priority / Editor Features
-
-**Multi-Select** (prerequisite for colinear alignment)
-- Ctrl+click to select multiple entities
-- Needed for alignment tools, bulk operations
 
 **Zones / ROI Sketching Tool** (upstream #183, from traffic_editor)
 - Draw zones/regions on the map for area-based constraints
@@ -191,23 +229,6 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 **Sub-element Hover/Select** (upstream #380)
 - Hover and select individual sub-elements (e.g., door handles, wall segments)
-
-**Saving Views** (upstream #217)
-- Save camera positions and switch between named views
-
-**List Nearby Elements** (upstream #195)
-- Context panel showing elements near the cursor or selection
-
-### P3 -- Low Priority / Polish
-
-**Reduce Clutter in Right Panel** (upstream #261, #355)
-- Further UI cleanup beyond tabs (progressive disclosure, better defaults)
-
-**Improve Error Messages / Diagnostics** (upstream #296)
-- Better feedback when assets fail to load
-
-**Export Customizability** (upstream #246)
-- Options for what to include/exclude in SDF export
 
 ### P4 -- Future / Research
 

@@ -36,6 +36,7 @@ fn render_status_bar(
     projection_mode: Res<ProjectionMode>,
     grid_config: Res<SnapGridConfig>,
     graph_view: Res<NavGraphViewMode>,
+    measure_tool: Res<crate::interaction::MeasureTool>,
 ) {
     egui::TopBottomPanel::bottom("status_bar")
         .exact_height(22.0)
@@ -107,9 +108,31 @@ fn render_status_bar(
                     ui.separator();
                 }
 
+                // Measure tool indicator
+                if measure_tool.active {
+                    let measure_text = if measure_tool.point_a.is_some() {
+                        "Measure: click 2nd point"
+                    } else {
+                        "Measure: click 1st point"
+                    };
+                    ui.label(
+                        egui::RichText::new(measure_text)
+                            .small()
+                            .color(egui::Color32::from_rgb(0, 220, 220)),
+                    );
+                    if let Some(ref result) = measure_tool.last_result {
+                        ui.label(
+                            egui::RichText::new(format!("({:.3}m)", result.distance))
+                                .small()
+                                .color(egui::Color32::from_rgb(0, 200, 200)),
+                        );
+                    }
+                    ui.separator();
+                }
+
                 ui.label(
                     egui::RichText::new(
-                        "[G] snap  [Shift+G] size  [Alt+G] grid  [F2] ortho  [F3] persp  [F4] graph  [Del] delete",
+                        "[G] snap  [M] measure  [F2] ortho  [F3] persp  [F4] graph  [Del] delete",
                     )
                     .small()
                     .weak(),

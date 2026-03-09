@@ -1,4 +1,5 @@
 use crate::{
+    interaction::{CopyProperties, MultiSelection, PasteProperties, PropertiesClipboard},
     site::Delete,
     undo::{RedoRequest, UndoHistory, UndoRequest},
     AppState,
@@ -11,8 +12,11 @@ use rmf_site_picking::Selection;
 pub struct EditMenuItems {
     undo: Entity,
     redo: Entity,
-    _separator: Entity,
+    _separator1: Entity,
     delete: Entity,
+    _separator2: Entity,
+    copy_props: Entity,
+    paste_props: Entity,
 }
 
 impl FromWorld for EditMenuItems {
@@ -33,10 +37,25 @@ impl FromWorld for EditMenuItems {
                 MenuDisabled,
             ))
             .id();
-        let separator = world.spawn((MenuItem::Separator, ChildOf(edit_menu))).id();
+        let separator1 = world.spawn((MenuItem::Separator, ChildOf(edit_menu))).id();
         let delete = world
             .spawn((
                 MenuItem::Text(TextMenuItem::new("Delete").shortcut("Del")),
+                ChildOf(edit_menu),
+                MenuDisabled,
+            ))
+            .id();
+        let separator2 = world.spawn((MenuItem::Separator, ChildOf(edit_menu))).id();
+        let copy_props = world
+            .spawn((
+                MenuItem::Text(TextMenuItem::new("Copy Properties").shortcut("Ctrl-Shift-C")),
+                ChildOf(edit_menu),
+                MenuDisabled,
+            ))
+            .id();
+        let paste_props = world
+            .spawn((
+                MenuItem::Text(TextMenuItem::new("Paste Properties").shortcut("Ctrl-Shift-V")),
                 ChildOf(edit_menu),
                 MenuDisabled,
             ))
@@ -45,8 +64,11 @@ impl FromWorld for EditMenuItems {
         Self {
             undo,
             redo,
-            _separator: separator,
+            _separator1: separator1,
             delete,
+            _separator2: separator2,
+            copy_props,
+            paste_props,
         }
     }
 }
@@ -55,6 +77,7 @@ fn update_edit_menu_state(
     edit_menu: Res<EditMenuItems>,
     undo_history: Res<UndoHistory>,
     selection: Res<Selection>,
+    clipboard: Res<PropertiesClipboard>,
     mut commands: Commands,
 ) {
     if undo_history.can_undo() {
@@ -71,8 +94,20 @@ fn update_edit_menu_state(
 
     if selection.0.is_some() {
         commands.entity(edit_menu.delete).remove::<MenuDisabled>();
+        commands
+            .entity(edit_menu.copy_props)
+            .remove::<MenuDisabled>();
     } else {
         commands.entity(edit_menu.delete).insert(MenuDisabled);
+        commands.entity(edit_menu.copy_props).insert(MenuDisabled);
+    }
+
+    if selection.0.is_some() && !clipboard.is_empty() {
+        commands
+            .entity(edit_menu.paste_props)
+            .remove::<MenuDisabled>();
+    } else {
+        commands.entity(edit_menu.paste_props).insert(MenuDisabled);
     }
 }
 
@@ -80,9 +115,12 @@ fn handle_edit_menu_events(
     mut menu_events: EventReader<MenuEvent>,
     edit_menu: Res<EditMenuItems>,
     selection: Res<Selection>,
+    mut multi: ResMut<MultiSelection>,
     mut undo_request: EventWriter<UndoRequest>,
     mut redo_request: EventWriter<RedoRequest>,
     mut delete: EventWriter<Delete>,
+    mut copy_events: EventWriter<CopyProperties>,
+    mut paste_events: EventWriter<PasteProperties>,
 ) {
     for event in menu_events.read() {
         if !event.clicked() {
@@ -94,9 +132,17 @@ fn handle_edit_menu_events(
         } else if source == edit_menu.redo {
             redo_request.write(RedoRequest);
         } else if source == edit_menu.delete {
-            if let Some(selected) = selection.0 {
-                delete.write(Delete::new(selected));
+            let all = multi.all_with_primary(&selection);
+            for entity in &all {
+                delete.write(Delete::new(*entity));
             }
+            if !all.is_empty() {
+                multi.clear();
+            }
+        } else if source == edit_menu.copy_props {
+            copy_events.write(CopyProperties);
+        } else if source == edit_menu.paste_props {
+            paste_events.write(PasteProperties);
         }
     }
 }
