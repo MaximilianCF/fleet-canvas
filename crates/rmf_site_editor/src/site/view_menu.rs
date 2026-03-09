@@ -353,8 +353,8 @@ fn render_graph_view_legend(
     let ctx = contexts.ctx_mut();
     bevy_egui::egui::Window::new("Graph Legend")
         .anchor(
-            bevy_egui::egui::Align2::LEFT_BOTTOM,
-            bevy_egui::egui::vec2(10.0, -30.0),
+            bevy_egui::egui::Align2::LEFT_TOP,
+            bevy_egui::egui::vec2(10.0, 70.0),
         )
         .resizable(false)
         .collapsible(false)

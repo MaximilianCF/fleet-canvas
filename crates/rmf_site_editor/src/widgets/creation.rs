@@ -41,20 +41,54 @@ pub struct StandardCreationPlugin {}
 impl Plugin for StandardCreationPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
+            // Navigation group
             LaneCreationPlugin::default(),
             LocationCreationPlugin::default(),
+            ToolbarSeparatorPlugin0,
+            // Structure group
             WallCreationPlugin::default(),
             DoorCreationPlugin::default(),
             LiftCreationPlugin::default(),
             FloorCreationPlugin::default(),
+            ToolbarSeparatorPlugin1,
+            // Annotation group
             FiducialCreationPlugin::default(),
             MeasurementCreationPlugin::default(),
+            ToolbarSeparatorPlugin2,
+            // Asset group
             DrawingCreationPlugin::default(),
             ModelCreationPlugin::default(),
             BrowseFuelTogglePlugin::default(),
         ));
     }
 }
+
+/// Toolbar separator widgets — each must be a unique type for the ECS.
+macro_rules! toolbar_sep {
+    ($plugin:ident, $widget:ident) => {
+        #[derive(Default)]
+        struct $plugin;
+        impl Plugin for $plugin {
+            fn build(&self, app: &mut App) {
+                app.add_plugins(HeaderTilePlugin::<$widget>::new());
+            }
+        }
+        #[derive(SystemParam)]
+        struct $widget<'w, 's> {
+            #[allow(dead_code)]
+            _m: Query<'w, 's, ()>,
+        }
+        impl<'w, 's> WidgetSystem<Tile> for $widget<'w, 's> {
+            fn show(_: Tile, ui: &mut Ui, _: &mut SystemState<Self>, _: &mut World) {
+                ui.separator();
+            }
+        }
+    };
+}
+
+toolbar_sep!(ToolbarSeparatorPlugin0, ToolbarSep0);
+toolbar_sep!(ToolbarSeparatorPlugin1, ToolbarSep1);
+toolbar_sep!(ToolbarSeparatorPlugin2, ToolbarSep2);
 
 /// Add a widget for lane creation
 #[derive(Default)]
@@ -670,7 +704,10 @@ impl<'w> WidgetSystem<Tile> for BrowseFuelToggle<'w> {
     }
 }
 
-/// Helper funtion to display the button name on hover
+/// Helper function to display creation buttons with icon + label.
 fn button_clicked(ui: &mut Ui, icon: &str, tooltip: &str) -> bool {
-    ui.add(Button::new(icon)).on_hover_text(tooltip).clicked()
+    let label = format!("{} {}", icon, tooltip);
+    ui.add(Button::new(egui::RichText::new(label).size(12.0)))
+        .on_hover_text(format!("Create new {}", tooltip))
+        .clicked()
 }

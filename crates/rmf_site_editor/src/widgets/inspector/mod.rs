@@ -365,8 +365,30 @@ impl<'w, 's> WidgetSystem<Tile> for Inspector<'w, 's> {
         }
 
         let Some(mut selection) = selection.0 else {
+            ui.add_space(12.0);
+            ui.label(
+                egui::RichText::new("Select an element to inspect its properties")
+                    .size(13.0)
+                    .weak(),
+            );
+            ui.add_space(12.0);
+            ui.separator();
             ui.add_space(8.0);
-            ui.label("Select an element to inspect its properties");
+            ui.label(egui::RichText::new("Quick Start").strong().size(13.0));
+            ui.add_space(4.0);
+            let hints = [
+                "Click an element in the viewport to select it",
+                "Use the toolbar above to create lanes, walls, doors...",
+                "Switch to Site tab to manage levels and models",
+                "Press F4 for Graph View (navigation only)",
+                "Press M to measure distances",
+            ];
+            for hint in hints {
+                ui.horizontal(|ui| {
+                    ui.label(egui::RichText::new("•").weak());
+                    ui.label(egui::RichText::new(hint).size(11.5).weak());
+                });
+            }
             return;
         };
 

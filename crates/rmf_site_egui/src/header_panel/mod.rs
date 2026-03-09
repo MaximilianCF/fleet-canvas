@@ -89,9 +89,9 @@ impl Plugin for HeaderPanelPlugin {
                 self.side,
                 PanelConfig {
                     resizable: false,
-                    default_dimension: 30.0,
+                    default_dimension: 36.0,
                     horizontal_scrolling: ScrollConfig {
-                        enable_scroll: false,
+                        enable_scroll: true,
                         auto_shrink: true,
                     },
                     vertical_scrolling: ScrollConfig {

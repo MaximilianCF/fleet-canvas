@@ -125,19 +125,24 @@ fn render_tabbed_panel(
     // Render tab bar
     let mut new_tab = active_tab.clone();
     ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
+        ui.spacing_mut().item_spacing.x = 1.0;
+        let tab_width = ui.available_width() / PANEL_TAB_ORDER.len() as f32;
         for &tab_name in PANEL_TAB_ORDER {
             let selected = active_tab == tab_name;
-            let button = egui::Button::new(egui::RichText::new(tab_name).strong().size(13.0));
+            let text = egui::RichText::new(tab_name).size(13.0);
+            let text = if selected { text.strong() } else { text };
+            let button = egui::Button::new(text).corner_radius(egui::CornerRadius {
+                nw: 4,
+                ne: 4,
+                sw: 0,
+                se: 0,
+            });
             let button = if selected {
-                button.fill(ui.visuals().selection.bg_fill)
+                button.fill(egui::Color32::from_rgb(45, 55, 72))
             } else {
                 button.fill(egui::Color32::TRANSPARENT)
             };
-            let response = ui.add_sized(
-                egui::vec2(ui.available_width() / PANEL_TAB_ORDER.len() as f32, 28.0),
-                button,
-            );
+            let response = ui.add_sized(egui::vec2(tab_width, 26.0), button);
             if response.clicked() {
                 new_tab = tab_name.to_string();
             }
@@ -150,7 +155,16 @@ fn render_tabbed_panel(
         }
     }
 
-    ui.separator();
+    // Thin accent line below active tab
+    let rect = ui.available_rect_before_wrap();
+    ui.painter().line_segment(
+        [
+            egui::pos2(rect.left(), rect.top()),
+            egui::pos2(rect.right(), rect.top()),
+        ],
+        egui::Stroke::new(1.0, egui::Color32::from_rgb(60, 70, 90)),
+    );
+    ui.add_space(2.0);
 
     // Filter children by active tab; also render children without a tab (untagged)
     let active = world
