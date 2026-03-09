@@ -50,9 +50,11 @@ pub mod site;
 pub mod workspace;
 use workspace::*;
 
+pub mod dae_loader;
 pub mod sdf_loader;
 
 pub mod site_asset_io;
+use dae_loader::*;
 use sdf_loader::*;
 
 pub mod wireframe;

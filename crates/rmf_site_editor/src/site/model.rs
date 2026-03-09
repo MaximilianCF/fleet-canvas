@@ -16,17 +16,16 @@
 */
 
 use crate::{
+    CurrentWorkspace, Issue, ValidateWorkspace,
     interaction::DragPlaneBundle,
     site::{
-        get_current_workspace_path, Change, CircleCollision, Collision, CurrentScenario,
-        DefaultFile, Delete, Mobility, RobotProperty, RobotPropertyKind, SiteAssets,
-        UpdateModifier,
+        Change, CircleCollision, Collision, CurrentScenario, DefaultFile, Delete, Mobility,
+        RobotProperty, RobotPropertyKind, SiteAssets, UpdateModifier, get_current_workspace_path,
     },
     site_asset_io::MODEL_ENVIRONMENT_VARIABLE,
-    CurrentWorkspace, Issue, ValidateWorkspace,
 };
 use bevy::{
-    asset::{io::AssetReaderError, AssetLoadError},
+    asset::{AssetLoadError, io::AssetReaderError},
     ecs::{
         hierarchy::ChildOf,
         relationship::DescendantIter,
@@ -100,6 +99,8 @@ fn common_model_directory_layouts(path: &str, model_name: &str) -> Vec<AssetSour
         AssetSource::Search(path.to_owned() + ".glb"),
         AssetSource::Search(path.to_owned() + ".stl"),
         AssetSource::Search(path.to_owned() + "/" + model_name + ".glb"),
+        AssetSource::Search(path.to_owned() + "/" + model_name + ".dae"),
+        AssetSource::Search(path.to_owned() + "/meshes/" + model_name + ".dae"),
     ]
 }
 
@@ -760,8 +761,9 @@ pub enum ModelLoadingErrorKind {
     )]
     InvalidAssetSource(String),
     #[error(
-        "Failed loading asset, make sure it is in a supported format (.dae is not supported),\
-        try using an API key if it belongs to a private organization \
+        "Failed loading asset, make sure it is in a supported format \
+        (.sdf, .obj, .glb, .stl, .dae are supported). \
+        Try using an API key if it belongs to a private organization \
         or add its path to the {MODEL_ENVIRONMENT_VARIABLE} environment variable."
     )]
     FailedLoadingAsset,
