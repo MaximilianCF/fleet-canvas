@@ -15,7 +15,7 @@
  *
 */
 
-use crate::{AppState, WorkspaceSaver};
+use crate::{widgets::SdfExportDialogState, AppState};
 use bevy::{ecs::hierarchy::ChildOf, prelude::*};
 use rmf_site_egui::*;
 
@@ -52,11 +52,11 @@ impl FromWorld for SdfExportMenu {
 fn handle_export_sdf_menu_events(
     mut menu_events: EventReader<MenuEvent>,
     sdf_menu: Res<SdfExportMenu>,
-    mut workspace_saver: WorkspaceSaver,
+    mut dialog: ResMut<SdfExportDialogState>,
 ) {
     for event in menu_events.read() {
         if event.clicked() && event.source() == sdf_menu.get() {
-            workspace_saver.export_sdf_to_dialog();
+            dialog.show = true;
         }
     }
 }

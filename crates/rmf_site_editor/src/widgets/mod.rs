@@ -74,6 +74,9 @@ pub use inspector::*;
 pub mod move_layer;
 pub use move_layer::*;
 
+pub mod sdf_export_dialog;
+pub use sdf_export_dialog::*;
+
 pub mod sdf_export_menu;
 use rmf_site_egui::*;
 use rmf_site_picking::{Hover, SelectionServiceStages, UiFocused};
@@ -182,6 +185,8 @@ impl Plugin for StandardUiPlugin {
                 StatusBarPlugin,
                 #[cfg(not(target_arch = "wasm32"))]
                 SdfExportMenuPlugin::default(),
+                #[cfg(not(target_arch = "wasm32"))]
+                SdfExportDialogPlugin,
                 #[cfg(not(target_arch = "wasm32"))]
                 NavGraphIoPlugin::default(),
             ))

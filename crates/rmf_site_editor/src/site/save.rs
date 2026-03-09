@@ -1781,6 +1781,9 @@ pub fn save_site(world: &mut World) {
             Some(s) => s,
             None => {
                 error!("Unable to save file: Invalid path [{new_path:?}]");
+                world
+                    .resource_mut::<Notifications>()
+                    .error("Save failed: invalid file path");
                 continue;
             }
         };
@@ -1799,6 +1802,9 @@ pub fn save_site(world: &mut World) {
                     Ok(f) => f,
                     Err(err) => {
                         error!("Unable to save file: {err}");
+                        world
+                            .resource_mut::<Notifications>()
+                            .error(format!("Save failed: {err}"));
                         continue;
                     }
                 };
@@ -1810,6 +1816,9 @@ pub fn save_site(world: &mut World) {
                     Ok(site) => site,
                     Err(err) => {
                         error!("Unable to compile site: {err}");
+                        world
+                            .resource_mut::<Notifications>()
+                            .error(format!("Save failed: {err}"));
                         continue;
                     }
                 };
@@ -1849,6 +1858,9 @@ pub fn save_site(world: &mut World) {
                     Ok(site) => site,
                     Err(err) => {
                         error!("Unable to compile site: {err}");
+                        world
+                            .resource_mut::<Notifications>()
+                            .error("SDF export failed: site has errors. Check Diagnostic Tool.");
                         continue;
                     }
                 };
@@ -1857,13 +1869,17 @@ pub fn save_site(world: &mut World) {
                 if !new_path.exists() {
                     if let Err(e) = std::fs::create_dir_all(&new_path) {
                         error!("Unable to create folder {}: {e}", new_path.display());
+                        world
+                            .resource_mut::<Notifications>()
+                            .error(format!("SDF export failed: cannot create folder: {e}"));
                         continue;
                     }
-                } else {
-                    if !new_path.is_dir() {
-                        error!("SDF can only be exported to a folder");
-                        continue;
-                    }
+                } else if !new_path.is_dir() {
+                    error!("SDF can only be exported to a folder");
+                    world
+                        .resource_mut::<Notifications>()
+                        .error("SDF export requires selecting a folder, not a file");
+                    continue;
                 }
                 let mut sdf_path = new_path.clone();
                 sdf_path.push(&site.properties.name.0);
@@ -1872,6 +1888,9 @@ pub fn save_site(world: &mut World) {
                     Ok(f) => f,
                     Err(err) => {
                         error!("Unable to save file {}: {err}", sdf_path.display());
+                        world
+                            .resource_mut::<Notifications>()
+                            .error(format!("SDF export failed: cannot create file: {err}"));
                         continue;
                     }
                 };
@@ -1880,18 +1899,37 @@ pub fn save_site(world: &mut World) {
                 meshes_dir.push("meshes");
                 if let Err(e) = std::fs::create_dir_all(&meshes_dir) {
                     error!("Unable to create folder {}: {e}", meshes_dir.display());
+                    world.resource_mut::<Notifications>().error(format!(
+                        "SDF export failed: cannot create meshes folder: {e}"
+                    ));
                     continue;
                 }
                 if let Err(e) = collect_site_meshes(world, save_event.site, &meshes_dir) {
                     error!("Unable to collect site meshes: {e}");
+                    world
+                        .resource_mut::<Notifications>()
+                        .error(format!("SDF export failed: mesh collection error: {e}"));
                     continue;
                 }
 
                 migrate_relative_paths(save_event.site, &sdf_path, world);
-                let sdf = match site.to_sdf() {
+                let export_options = world
+                    .get_resource::<crate::widgets::SdfExportOptions>()
+                    .cloned()
+                    .unwrap_or_default();
+                let sdf_config = SdfExportConfig {
+                    include_models: export_options.include_models,
+                    include_doors: export_options.include_doors,
+                    include_lifts: export_options.include_lifts,
+                    include_lights: export_options.include_lights,
+                };
+                let sdf = match site.to_sdf_with_config(&sdf_config) {
                     Ok(sdf) => sdf,
                     Err(err) => {
                         error!("Unable to convert site to sdf: {err}");
+                        world
+                            .resource_mut::<Notifications>()
+                            .error(format!("SDF export failed: {err}"));
                         continue;
                     }
                 };
@@ -1904,17 +1942,20 @@ pub fn save_site(world: &mut World) {
                     error!("Failed serializing site to sdf: {e}");
                     world
                         .resource_mut::<Notifications>()
-                        .error(format!("SDF export failed: {e}"));
+                        .error(format!("SDF export failed: serialization error: {e}"));
                     continue;
                 }
                 // Generate ROS 2 launch file alongside SDF
                 #[cfg(not(target_arch = "wasm32"))]
-                {
+                if export_options.include_ros2_launch {
                     let launch_path = new_path.join("launch.py");
                     let world_file = format!("{}.world", site.properties.name.0);
                     let launch_content = generate_ros2_launch_file(&world_file);
                     if let Err(e) = std::fs::write(&launch_path, launch_content) {
                         warn!("Could not write launch file: {e}");
+                        world
+                            .resource_mut::<Notifications>()
+                            .warning(format!("SDF exported but launch file failed: {e}"));
                     } else {
                         info!("Launch file written to {}", launch_path.display());
                     }
@@ -1929,12 +1970,16 @@ pub fn save_site(world: &mut World) {
                     Ok(site) => site,
                     Err(err) => {
                         error!("Unable to compile site: {err}");
+                        world.resource_mut::<Notifications>().error(
+                            "Nav graph export failed: site has errors. Check Diagnostic Tool.",
+                        );
                         continue;
                     }
                 };
 
+                let mut had_errors = false;
                 for (name, nav_graph) in legacy::nav_graph::NavGraph::from_site(&site) {
-                    let graph_file = new_path.clone().join(name + ".nav.yaml");
+                    let graph_file = new_path.clone().join(name.clone() + ".nav.yaml");
                     info!(
                         "Saving legacy nav graph to {}",
                         graph_file.to_str().unwrap_or("<failed to render??>")
@@ -1943,12 +1988,23 @@ pub fn save_site(world: &mut World) {
                         Ok(f) => f,
                         Err(err) => {
                             error!("Unable to save nav graph: {err}");
+                            world
+                                .resource_mut::<Notifications>()
+                                .error(format!("Failed to export nav graph \"{name}\": {err}"));
+                            had_errors = true;
                             continue;
                         }
                     };
                     if let Err(err) = serde_yaml::to_writer(f, &nav_graph) {
                         error!("Failed to save nav graph: {err}");
+                        world
+                            .resource_mut::<Notifications>()
+                            .error(format!("Failed to export nav graph \"{name}\": {err}"));
+                        had_errors = true;
                     }
+                }
+                if had_errors {
+                    continue;
                 }
 
                 info!(

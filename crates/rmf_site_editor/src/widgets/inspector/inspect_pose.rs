@@ -20,7 +20,7 @@ use crate::{
     widgets::{inspector::InspectAngle, prelude::*, Inspect},
 };
 use bevy::{math::Quat, prelude::*};
-use bevy_egui::egui::{ComboBox, DragValue, Grid, Ui};
+use bevy_egui::egui::{CollapsingHeader, ComboBox, DragValue, Grid, Ui};
 use rmf_site_egui::WidgetSystem;
 use rmf_site_format::{Pose, Rotation};
 
@@ -120,58 +120,74 @@ impl<'a> InspectPoseComponent<'a> {
             ui.add_space(5.0);
         }
 
-        ui.horizontal(|ui| {
-            ui.label("Rotation");
-            ComboBox::from_id_salt("pose_rotation")
-                .selected_text(new_pose.rot.label())
-                .show_ui(ui, |ui| {
-                    for variant in &[
-                        new_pose.rot.as_yaw(),
-                        new_pose.rot.as_euler_extrinsic_xyz(),
-                        new_pose.rot.as_quat(),
-                    ] {
-                        ui.selectable_value(&mut new_pose.rot, *variant, variant.label());
-                    }
-                });
-        });
-
+        // Show yaw inline (most common), put rotation mode + advanced rotation under collapsible
         match &mut new_pose.rot {
             Rotation::Yaw(yaw) => {
-                InspectAngle::new(yaw).show(ui);
-            }
-            Rotation::EulerExtrinsicXYZ([roll, pitch, yaw]) => {
-                Grid::new("inspect_rotation_euler_xyz").show(ui, |ui| {
-                    ui.label("roll");
-                    ui.label("pitch");
-                    ui.label("yaw");
-                    ui.end_row();
-
-                    InspectAngle::new(roll).show(ui);
-                    InspectAngle::new(pitch).show(ui);
+                ui.horizontal(|ui| {
+                    ui.label("Yaw");
                     InspectAngle::new(yaw).show(ui);
                 });
             }
-            Rotation::Quat([x, y, z, w]) => {
-                Grid::new("inspect_rotation_quat").show(ui, |ui| {
-                    ui.label("x");
-                    ui.label("y");
-                    ui.label("z");
-                    ui.label("w");
-                    ui.end_row();
+            _ => {}
+        }
 
-                    ui.add(DragValue::new(x).speed(0.01).range(-1.0..=1.0));
-                    ui.add(DragValue::new(y).speed(0.01).range(-1.0..=1.0));
-                    ui.add(DragValue::new(z).speed(0.01).range(-1.0..=1.0));
-                    ui.add(DragValue::new(w).speed(0.01).range(-1.0..=1.0));
-                    ui.end_row();
+        CollapsingHeader::new("Rotation")
+            .id_salt("pose_rotation_advanced")
+            .default_open(!matches!(new_pose.rot, Rotation::Yaw(_)))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Mode");
+                    ComboBox::from_id_salt("pose_rotation")
+                        .selected_text(new_pose.rot.label())
+                        .show_ui(ui, |ui| {
+                            for variant in &[
+                                new_pose.rot.as_yaw(),
+                                new_pose.rot.as_euler_extrinsic_xyz(),
+                                new_pose.rot.as_quat(),
+                            ] {
+                                ui.selectable_value(&mut new_pose.rot, *variant, variant.label());
+                            }
+                        });
                 });
 
-                if ui.button("normalize").clicked() {
-                    let normalized = Quat::from_array([*x, *y, *z, *w]).normalize();
-                    [*x, *y, *z, *w] = normalized.to_array();
+                match &mut new_pose.rot {
+                    Rotation::Yaw(yaw) => {
+                        InspectAngle::new(yaw).show(ui);
+                    }
+                    Rotation::EulerExtrinsicXYZ([roll, pitch, yaw]) => {
+                        Grid::new("inspect_rotation_euler_xyz").show(ui, |ui| {
+                            ui.label("roll");
+                            ui.label("pitch");
+                            ui.label("yaw");
+                            ui.end_row();
+
+                            InspectAngle::new(roll).show(ui);
+                            InspectAngle::new(pitch).show(ui);
+                            InspectAngle::new(yaw).show(ui);
+                        });
+                    }
+                    Rotation::Quat([x, y, z, w]) => {
+                        Grid::new("inspect_rotation_quat").show(ui, |ui| {
+                            ui.label("x");
+                            ui.label("y");
+                            ui.label("z");
+                            ui.label("w");
+                            ui.end_row();
+
+                            ui.add(DragValue::new(x).speed(0.01).range(-1.0..=1.0));
+                            ui.add(DragValue::new(y).speed(0.01).range(-1.0..=1.0));
+                            ui.add(DragValue::new(z).speed(0.01).range(-1.0..=1.0));
+                            ui.add(DragValue::new(w).speed(0.01).range(-1.0..=1.0));
+                            ui.end_row();
+                        });
+
+                        if ui.button("normalize").clicked() {
+                            let normalized = Quat::from_array([*x, *y, *z, *w]).normalize();
+                            [*x, *y, *z, *w] = normalized.to_array();
+                        }
+                    }
                 }
-            }
-        }
+            });
 
         if new_pose != *self.pose {
             return Some(new_pose);

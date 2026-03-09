@@ -140,6 +140,7 @@ pub fn handle_loaded_drawing(
     mut materials: ResMut<Assets<StandardMaterial>>,
     segments: Query<&DrawingSegments>,
     default_drawing_vis: Query<&GlobalDrawingVisibility>,
+    mut notifications: ResMut<crate::widgets::Notifications>,
 ) {
     for (entity, source, pose, pixels_per_meter, handle, vis, child_of, rank) in
         loading_drawings.iter()
@@ -219,6 +220,7 @@ pub fn handle_loaded_drawing(
             }
             LoadState::Failed(e) => {
                 error!("Failed loading drawing {:?}, reason: [{:?}]", source, e);
+                notifications.error(format!("Failed to load drawing: {source:?}"));
                 commands.entity(entity).remove::<LoadingDrawing>();
             }
             _ => {}

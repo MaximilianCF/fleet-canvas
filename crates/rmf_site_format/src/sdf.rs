@@ -27,6 +27,30 @@ use thiserror::Error;
 
 const DEFAULT_CABIN_MASS: f64 = 1200.0;
 
+/// Configuration for SDF export — controls what gets included in the output.
+#[derive(Debug, Clone)]
+pub struct SdfExportConfig {
+    /// Include non-static models in the export.
+    pub include_models: bool,
+    /// Include door geometry and plugins.
+    pub include_doors: bool,
+    /// Include lift geometry and plugins.
+    pub include_lifts: bool,
+    /// Include lights (point, spot, directional).
+    pub include_lights: bool,
+}
+
+impl Default for SdfExportConfig {
+    fn default() -> Self {
+        Self {
+            include_models: true,
+            include_doors: true,
+            include_lifts: true,
+            include_lights: true,
+        }
+    }
+}
+
 static WORLD_TEMPLATE: LazyLock<Result<SdfRoot, String>> =
     LazyLock::new(|| yaserde::de::from_str(include_str!("templates/gz_world.sdf")));
 
@@ -485,6 +509,13 @@ fn light_to_sdf(light: &crate::Light, level_name: &str, elevation: f32, idx: u32
 
 impl Site {
     pub fn to_sdf(&self) -> Result<SdfRoot, SdfConversionError> {
+        self.to_sdf_with_config(&SdfExportConfig::default())
+    }
+
+    pub fn to_sdf_with_config(
+        &self,
+        config: &SdfExportConfig,
+    ) -> Result<SdfRoot, SdfConversionError> {
         let get_anchor = |id: u32| -> Result<&Anchor, SdfConversionError> {
             self.get_anchor(id)
                 .ok_or(SdfConversionError::BrokenAnchorReference(id))
@@ -561,153 +592,159 @@ impl Site {
                 }],
                 ..Default::default()
             });
-            for (model_instance_id, _) in &default_scenario.instances {
-                let parented_model_instance = self.model_instances.get(model_instance_id).ok_or(
-                    SdfConversionError::BrokenModelInstanceReference(*model_instance_id),
-                )?;
-                if parented_model_instance.parent != *level_id {
-                    continue;
-                }
-
-                let Some(model_description_id) = parented_model_instance.bundle.description.0
-                else {
-                    continue;
-                };
-                let model_description_bundle =
-                    self.model_descriptions.get(&model_description_id).ok_or(
-                        SdfConversionError::BrokenModelDescriptionReference(*model_instance_id),
-                    )?;
-
-                let mut added = false;
-                // TODO(luca) We need this because there is no concept of ingestor or dispenser in
-                // rmf_site yet. Remove when there is
-                if model_description_bundle.source.0
-                    == AssetSource::Search("OpenRobotics/TeleportIngestor".to_string())
-                {
-                    world.include.push(SdfWorldInclude {
-                        uri: "model://TeleportIngestor".to_string(),
-                        name: Some(parented_model_instance.bundle.name.0.clone()),
-                        pose: Some(parented_model_instance.bundle.pose.to_sdf()),
-                        ..Default::default()
-                    });
-                    added = true;
-                } else if model_description_bundle.source.0
-                    == AssetSource::Search("OpenRobotics/TeleportDispenser".to_string())
-                {
-                    world.include.push(SdfWorldInclude {
-                        uri: "model://TeleportDispenser".to_string(),
-                        name: Some(parented_model_instance.bundle.name.0.clone()),
-                        pose: Some(parented_model_instance.bundle.pose.to_sdf()),
-                        ..Default::default()
-                    });
-                    added = true;
-                }
-                // Non static models are included separately and are not part of the static world
-                else if !model_description_bundle.is_static.0.0 {
-                    let mut model_plugins: Vec<SdfPlugin> = Vec::new();
-                    let mut slotcar_definition = None;
-                    for (label, export_data) in parented_model_instance.bundle.export_data.0.iter()
-                    {
-                        let mut sdf_plugin = SdfPlugin {
-                            name: label.clone(),
-                            filename: "lib".to_string() + label + ".so",
-                            ..Default::default()
-                        };
-                        if let ElementData::Nested(element_map) = export_data.data.clone() {
-                            for element in element_map.all() {
-                                sdf_plugin.elements.push(element.clone());
-                            }
-                        }
-                        if label == "slotcar" {
-                            slotcar_definition = Some(sdf_plugin);
-                        } else {
-                            model_plugins.push(sdf_plugin);
-                        }
+            if config.include_models {
+                for (model_instance_id, _) in &default_scenario.instances {
+                    let parented_model_instance =
+                        self.model_instances.get(model_instance_id).ok_or(
+                            SdfConversionError::BrokenModelInstanceReference(*model_instance_id),
+                        )?;
+                    if parented_model_instance.parent != *level_id {
+                        continue;
                     }
-                    // For slotcar robots we just want to include them and add experimental
-                    // params update
-                    if let Some(slotcar) = slotcar_definition {
-                        let mut replacement = SdfParams::default();
-                        let mut plugin_element = XmlElement::default();
-                        plugin_element
-                            .attributes
-                            .insert("name".into(), slotcar.name.clone());
-                        plugin_element
-                            .attributes
-                            .insert("filename".into(), slotcar.filename);
-                        plugin_element
-                            .attributes
-                            .insert("element_id".into(), slotcar.name);
-                        plugin_element
-                            .attributes
-                            .insert("action".into(), "modify".into());
-                        plugin_element.name = "plugin".into();
-                        plugin_element.data = ElementData::Nested(slotcar.elements);
-                        replacement.0.push(plugin_element);
-                        let model_name = model_description_bundle.source.0.model_name();
+
+                    let Some(model_description_id) = parented_model_instance.bundle.description.0
+                    else {
+                        continue;
+                    };
+                    let model_description_bundle =
+                        self.model_descriptions.get(&model_description_id).ok_or(
+                            SdfConversionError::BrokenModelDescriptionReference(*model_instance_id),
+                        )?;
+
+                    let mut added = false;
+                    // TODO(luca) We need this because there is no concept of ingestor or dispenser in
+                    // rmf_site yet. Remove when there is
+                    if model_description_bundle.source.0
+                        == AssetSource::Search("OpenRobotics/TeleportIngestor".to_string())
+                    {
                         world.include.push(SdfWorldInclude {
-                            uri: format!("model://{}", model_name),
-                            experimental_params: Some(replacement),
+                            uri: "model://TeleportIngestor".to_string(),
                             name: Some(parented_model_instance.bundle.name.0.clone()),
                             pose: Some(parented_model_instance.bundle.pose.to_sdf()),
                             ..Default::default()
                         });
-                    } else {
-                        world.model.push(SdfModel {
-                            name: parented_model_instance.bundle.name.0.clone(),
-                            r#static: Some(model_description_bundle.is_static.0.0),
+                        added = true;
+                    } else if model_description_bundle.source.0
+                        == AssetSource::Search("OpenRobotics/TeleportDispenser".to_string())
+                    {
+                        world.include.push(SdfWorldInclude {
+                            uri: "model://TeleportDispenser".to_string(),
+                            name: Some(parented_model_instance.bundle.name.0.clone()),
                             pose: Some(parented_model_instance.bundle.pose.to_sdf()),
-                            link: vec![SdfLink {
-                                name: "link".into(),
-                                collision: vec![SdfCollision {
-                                    name: "collision".into(),
-                                    geometry: SdfGeometry::Mesh(SdfMeshShape {
-                                        uri: format!(
-                                            "meshes/model_{}_collision.glb",
-                                            model_description_id
-                                        ),
-                                        ..Default::default()
-                                    }),
-                                    ..Default::default()
-                                }],
-                                visual: vec![SdfVisual {
-                                    name: "visual".into(),
-                                    geometry: SdfGeometry::Mesh(SdfMeshShape {
-                                        uri: format!(
-                                            "meshes/model_{}_visual.glb",
-                                            model_description_id
-                                        ),
-                                        ..Default::default()
-                                    }),
-                                    ..Default::default()
-                                }],
-                                ..Default::default()
-                            }],
-                            plugin: model_plugins,
                             ..Default::default()
                         });
+                        added = true;
                     }
-                    added = true;
+                    // Non static models are included separately and are not part of the static world
+                    else if !model_description_bundle.is_static.0.0 {
+                        let mut model_plugins: Vec<SdfPlugin> = Vec::new();
+                        let mut slotcar_definition = None;
+                        for (label, export_data) in
+                            parented_model_instance.bundle.export_data.0.iter()
+                        {
+                            let mut sdf_plugin = SdfPlugin {
+                                name: label.clone(),
+                                filename: "lib".to_string() + label + ".so",
+                                ..Default::default()
+                            };
+                            if let ElementData::Nested(element_map) = export_data.data.clone() {
+                                for element in element_map.all() {
+                                    sdf_plugin.elements.push(element.clone());
+                                }
+                            }
+                            if label == "slotcar" {
+                                slotcar_definition = Some(sdf_plugin);
+                            } else {
+                                model_plugins.push(sdf_plugin);
+                            }
+                        }
+                        // For slotcar robots we just want to include them and add experimental
+                        // params update
+                        if let Some(slotcar) = slotcar_definition {
+                            let mut replacement = SdfParams::default();
+                            let mut plugin_element = XmlElement::default();
+                            plugin_element
+                                .attributes
+                                .insert("name".into(), slotcar.name.clone());
+                            plugin_element
+                                .attributes
+                                .insert("filename".into(), slotcar.filename);
+                            plugin_element
+                                .attributes
+                                .insert("element_id".into(), slotcar.name);
+                            plugin_element
+                                .attributes
+                                .insert("action".into(), "modify".into());
+                            plugin_element.name = "plugin".into();
+                            plugin_element.data = ElementData::Nested(slotcar.elements);
+                            replacement.0.push(plugin_element);
+                            let model_name = model_description_bundle.source.0.model_name();
+                            world.include.push(SdfWorldInclude {
+                                uri: format!("model://{}", model_name),
+                                experimental_params: Some(replacement),
+                                name: Some(parented_model_instance.bundle.name.0.clone()),
+                                pose: Some(parented_model_instance.bundle.pose.to_sdf()),
+                                ..Default::default()
+                            });
+                        } else {
+                            world.model.push(SdfModel {
+                                name: parented_model_instance.bundle.name.0.clone(),
+                                r#static: Some(model_description_bundle.is_static.0.0),
+                                pose: Some(parented_model_instance.bundle.pose.to_sdf()),
+                                link: vec![SdfLink {
+                                    name: "link".into(),
+                                    collision: vec![SdfCollision {
+                                        name: "collision".into(),
+                                        geometry: SdfGeometry::Mesh(SdfMeshShape {
+                                            uri: format!(
+                                                "meshes/model_{}_collision.glb",
+                                                model_description_id
+                                            ),
+                                            ..Default::default()
+                                        }),
+                                        ..Default::default()
+                                    }],
+                                    visual: vec![SdfVisual {
+                                        name: "visual".into(),
+                                        geometry: SdfGeometry::Mesh(SdfMeshShape {
+                                            uri: format!(
+                                                "meshes/model_{}_visual.glb",
+                                                model_description_id
+                                            ),
+                                            ..Default::default()
+                                        }),
+                                        ..Default::default()
+                                    }],
+                                    ..Default::default()
+                                }],
+                                plugin: model_plugins,
+                                ..Default::default()
+                            });
+                        }
+                        added = true;
+                    }
+                    if added {
+                        level_model_names.push(parented_model_instance.bundle.name.0.clone());
+                    }
                 }
-                if added {
-                    level_model_names.push(parented_model_instance.bundle.name.0.clone());
-                }
-            }
+            } // if config.include_models
             // Now add all the doors
-            for (door_id, door) in &level.doors {
-                let left_anchor = get_anchor(door.anchors.left())?;
-                let right_anchor = get_anchor(door.anchors.right())?;
-                let door_model = make_sdf_door(
-                    left_anchor,
-                    right_anchor,
-                    Vec3::new(0.0, 0.0, level.properties.elevation.0),
-                    true,
-                    &door.kind,
-                    format!("door_{door_id}").as_str(),
-                    door.name.0.as_str(),
-                )?;
-                level_model_names.push(door_model.name.clone());
-                world.model.push(door_model);
+            if config.include_doors {
+                for (door_id, door) in &level.doors {
+                    let left_anchor = get_anchor(door.anchors.left())?;
+                    let right_anchor = get_anchor(door.anchors.right())?;
+                    let door_model = make_sdf_door(
+                        left_anchor,
+                        right_anchor,
+                        Vec3::new(0.0, 0.0, level.properties.elevation.0),
+                        true,
+                        &door.kind,
+                        format!("door_{door_id}").as_str(),
+                        door.name.0.as_str(),
+                    )?;
+                    level_model_names.push(door_model.name.clone());
+                    world.model.push(door_model);
+                }
             }
             for model_name in level_model_names.into_iter() {
                 let model_element = XmlElement {
@@ -720,231 +757,240 @@ impl Site {
             floor_models_ele.data = ElementData::Nested(model_element_map);
             toggle_floors_plugin.elements.push(floor_models_ele);
         }
-        for (lift_id, lift) in &self.lifts {
-            let get_lift_anchor = |id: u32| -> Result<&Anchor, SdfConversionError> {
-                lift.cabin_anchors
-                    .get(&id)
-                    .ok_or(SdfConversionError::BrokenAnchorReference(id))
-            };
-            // Cabin
-            let LiftCabin::Rect(ref cabin) = lift.properties.cabin;
-            let pose = lift
-                .properties
-                .center(self)
-                .ok_or(SdfConversionError::LiftParsingError(
-                    lift.properties.name.0.clone(),
-                ))?;
-            let mut plugin = SdfPlugin {
-                name: "register_component".into(),
-                filename: "libregister_component.so".into(),
-                ..Default::default()
-            };
-            let mut component = XmlElement {
-                name: "component".into(),
-                ..Default::default()
-            };
-            component.attributes.insert("name".into(), "Lift".into());
-            let mut component_data = ElementMap::default();
-            let mut elements = vec![];
-            let lift_name = &lift.properties.name.0;
-            elements.push(("lift_name", lift_name.clone()));
-            let initial_floor = lift
-                .properties
-                .initial_level
-                .0
-                .and_then(|id| self.levels.get(&id))
-                .map(|level| level.properties.name.0.clone())
-                .or_else(|| {
-                    lift.any_valid_level().and_then(|id| {
-                        self.levels
-                            .get(&id)
-                            .map(|level| level.properties.name.0.clone())
+        if config.include_lifts {
+            for (lift_id, lift) in &self.lifts {
+                let get_lift_anchor = |id: u32| -> Result<&Anchor, SdfConversionError> {
+                    lift.cabin_anchors
+                        .get(&id)
+                        .ok_or(SdfConversionError::BrokenAnchorReference(id))
+                };
+                // Cabin
+                let LiftCabin::Rect(ref cabin) = lift.properties.cabin;
+                let pose =
+                    lift.properties
+                        .center(self)
+                        .ok_or(SdfConversionError::LiftParsingError(
+                            lift.properties.name.0.clone(),
+                        ))?;
+                let mut plugin = SdfPlugin {
+                    name: "register_component".into(),
+                    filename: "libregister_component.so".into(),
+                    ..Default::default()
+                };
+                let mut component = XmlElement {
+                    name: "component".into(),
+                    ..Default::default()
+                };
+                component.attributes.insert("name".into(), "Lift".into());
+                let mut component_data = ElementMap::default();
+                let mut elements = vec![];
+                let lift_name = &lift.properties.name.0;
+                elements.push(("lift_name", lift_name.clone()));
+                let initial_floor = lift
+                    .properties
+                    .initial_level
+                    .0
+                    .and_then(|id| self.levels.get(&id))
+                    .map(|level| level.properties.name.0.clone())
+                    .or_else(|| {
+                        lift.any_valid_level().and_then(|id| {
+                            self.levels
+                                .get(&id)
+                                .map(|level| level.properties.name.0.clone())
+                        })
                     })
-                })
-                .ok_or(SdfConversionError::MissingInitialLevel(lift_name.clone()))?;
-            elements.push(("initial_floor", initial_floor));
-            elements.push(("v_max_cabin", "2.0".to_string()));
-            elements.push(("a_max_cabin", "1.2".to_string()));
-            elements.push(("a_nom_cabin", "1.0".to_string()));
-            elements.push(("dx_min_cabin", "0.001".to_string()));
-            elements.push(("f_max_cabin", "25323.0".to_string()));
-            elements.push(("cabin_joint_name", "cabin_joint".to_string()));
-            let mut levels: BTreeMap<u32, ElementMap> = BTreeMap::new();
-            let mut lift_models = Vec::new();
-            let mut lift_joints = vec![SdfJoint {
-                name: "cabin_joint".into(),
-                r#type: "prismatic".into(),
-                parent: "world".into(),
-                child: "platform".into(),
-                axis: Some(SdfJointAxis {
-                    xyz: Vector3d::new(0.0, 0.0, 1.0),
-                    limit: Some(SdfJointAxisLimit {
-                        lower: -std::f64::INFINITY,
-                        upper: std::f64::INFINITY,
+                    .ok_or(SdfConversionError::MissingInitialLevel(lift_name.clone()))?;
+                elements.push(("initial_floor", initial_floor));
+                elements.push(("v_max_cabin", "2.0".to_string()));
+                elements.push(("a_max_cabin", "1.2".to_string()));
+                elements.push(("a_nom_cabin", "1.0".to_string()));
+                elements.push(("dx_min_cabin", "0.001".to_string()));
+                elements.push(("f_max_cabin", "25323.0".to_string()));
+                elements.push(("cabin_joint_name", "cabin_joint".to_string()));
+                let mut levels: BTreeMap<u32, ElementMap> = BTreeMap::new();
+                let mut lift_models = Vec::new();
+                let mut lift_joints = vec![SdfJoint {
+                    name: "cabin_joint".into(),
+                    r#type: "prismatic".into(),
+                    parent: "world".into(),
+                    child: "platform".into(),
+                    axis: Some(SdfJointAxis {
+                        xyz: Vector3d::new(0.0, 0.0, 1.0),
+                        limit: Some(SdfJointAxisLimit {
+                            lower: -std::f64::INFINITY,
+                            upper: std::f64::INFINITY,
+                            ..Default::default()
+                        }),
                         ..Default::default()
                     }),
                     ..Default::default()
-                }),
-                ..Default::default()
-            }];
-            for (face, door_placement) in cabin.doors().iter() {
-                let Some(door_placement) = door_placement else {
-                    continue;
-                };
-                // TODO(luca) use door struct for offset / shift
-                // TODO(luca) remove unwrap
-                let door = lift.cabin_doors.get(&door_placement.door).unwrap();
-                let cabin_door_name = format!("CabinDoor_{}_door_{}", lift_name, face.label());
-                let cabin_mesh_prefix = format!("lift_{}_{}", lift_id, face.label());
-                let left_anchor = get_lift_anchor(door.reference_anchors.left())?;
-                let right_anchor = get_lift_anchor(door.reference_anchors.right())?;
-                let x_offset = -face.u()
-                    * (door_placement.thickness() / 2.0
-                        + door_placement
-                            .custom_gap
-                            .unwrap_or_else(|| cabin.gap.unwrap_or(0.01)));
-                let mut cabin_door = make_sdf_door(
-                    left_anchor,
-                    right_anchor,
-                    x_offset,
-                    false,
-                    &door.kind,
-                    &cabin_mesh_prefix,
-                    &cabin_door_name,
-                )?;
-                for mut joint in cabin_door.joint.drain(..) {
-                    // Move the joint to the lift and change its parenthood accordingly
-                    joint.parent = "platform".into();
-                    joint.child = format!("{}::{}", cabin_door.name, joint.child);
-                    lift_joints.push(joint);
-                }
-                lift_models.push(cabin_door.into());
-                for visit in door.visits.0.iter() {
-                    let level = get_level(*visit)?;
-                    let shaft_door_name = format!(
-                        "ShaftDoor_{}_{}_door_{}",
-                        level.properties.name.0,
-                        lift_name,
-                        face.label()
-                    );
+                }];
+                for (face, door_placement) in cabin.doors().iter() {
+                    let Some(door_placement) = door_placement else {
+                        continue;
+                    };
+                    // TODO(luca) use door struct for offset / shift
+                    // TODO(luca) remove unwrap
+                    let door = lift.cabin_doors.get(&door_placement.door).unwrap();
+                    let cabin_door_name = format!("CabinDoor_{}_door_{}", lift_name, face.label());
+                    let cabin_mesh_prefix = format!("lift_{}_{}", lift_id, face.label());
                     let left_anchor = get_lift_anchor(door.reference_anchors.left())?;
                     let right_anchor = get_lift_anchor(door.reference_anchors.right())?;
-                    let shaft_door = make_sdf_door(
+                    let x_offset = -face.u()
+                        * (door_placement.thickness() / 2.0
+                            + door_placement
+                                .custom_gap
+                                .unwrap_or_else(|| cabin.gap.unwrap_or(0.01)));
+                    let mut cabin_door = make_sdf_door(
                         left_anchor,
                         right_anchor,
-                        Vec3::from(pose.trans) + Vec3::new(0.0, 0.0, level.properties.elevation.0),
+                        x_offset,
                         false,
                         &door.kind,
                         &cabin_mesh_prefix,
-                        &shaft_door_name,
+                        &cabin_door_name,
                     )?;
-                    // Add the pose of the lift to have world coordinates
-                    world.model.push(shaft_door);
-                    // Add the shaft door to the level transparency plugin
-                    toggle_floors_plugin.elements.for_each_mut("floor", |elem| {
-                        if elem.attributes.get("name") == Some(&level.properties.name.0) {
-                            if let ElementData::Nested(ref mut map) = elem.data {
-                                map.push(XmlElement {
-                                    name: "model".into(),
-                                    attributes: [("name".into(), shaft_door_name.clone())].into(),
-                                    ..Default::default()
-                                });
+                    for mut joint in cabin_door.joint.drain(..) {
+                        // Move the joint to the lift and change its parenthood accordingly
+                        joint.parent = "platform".into();
+                        joint.child = format!("{}::{}", cabin_door.name, joint.child);
+                        lift_joints.push(joint);
+                    }
+                    lift_models.push(cabin_door.into());
+                    for visit in door.visits.0.iter() {
+                        let level = get_level(*visit)?;
+                        let shaft_door_name = format!(
+                            "ShaftDoor_{}_{}_door_{}",
+                            level.properties.name.0,
+                            lift_name,
+                            face.label()
+                        );
+                        let left_anchor = get_lift_anchor(door.reference_anchors.left())?;
+                        let right_anchor = get_lift_anchor(door.reference_anchors.right())?;
+                        let shaft_door = make_sdf_door(
+                            left_anchor,
+                            right_anchor,
+                            Vec3::from(pose.trans)
+                                + Vec3::new(0.0, 0.0, level.properties.elevation.0),
+                            false,
+                            &door.kind,
+                            &cabin_mesh_prefix,
+                            &shaft_door_name,
+                        )?;
+                        // Add the pose of the lift to have world coordinates
+                        world.model.push(shaft_door);
+                        // Add the shaft door to the level transparency plugin
+                        toggle_floors_plugin.elements.for_each_mut("floor", |elem| {
+                            if elem.attributes.get("name") == Some(&level.properties.name.0) {
+                                if let ElementData::Nested(ref mut map) = elem.data {
+                                    map.push(XmlElement {
+                                        name: "model".into(),
+                                        attributes: [("name".into(), shaft_door_name.clone())]
+                                            .into(),
+                                        ..Default::default()
+                                    });
+                                }
                             }
-                        }
-                    });
-                    let level = levels.entry(*visit).or_default();
-                    let element = XmlElement {
-                        name: "door_pair".into(),
+                        });
+                        let level = levels.entry(*visit).or_default();
+                        let element = XmlElement {
+                            name: "door_pair".into(),
+                            attributes: [
+                                ("cabin_door".to_string(), cabin_door_name.clone()),
+                                ("shaft_door".to_string(), shaft_door_name),
+                            ]
+                            .into(),
+                            ..Default::default()
+                        };
+                        level.push(element);
+                    }
+                }
+                for (key, door_pairs) in levels.into_iter() {
+                    let level = get_level(key)?;
+                    component_data.push(XmlElement {
+                        name: "floor".into(),
                         attributes: [
-                            ("cabin_door".to_string(), cabin_door_name.clone()),
-                            ("shaft_door".to_string(), shaft_door_name),
+                            ("name".to_string(), level.properties.name.0.clone()),
+                            (
+                                "elevation".to_string(),
+                                level.properties.elevation.0.to_string(),
+                            ),
                         ]
                         .into(),
+                        data: ElementData::Nested(door_pairs),
                         ..Default::default()
-                    };
-                    level.push(element);
+                    });
                 }
-            }
-            for (key, door_pairs) in levels.into_iter() {
-                let level = get_level(key)?;
-                component_data.push(XmlElement {
-                    name: "floor".into(),
-                    attributes: [
-                        ("name".to_string(), level.properties.name.0.clone()),
-                        (
-                            "elevation".to_string(),
-                            level.properties.elevation.0.to_string(),
-                        ),
-                    ]
-                    .into(),
-                    data: ElementData::Nested(door_pairs),
-                    ..Default::default()
-                });
-            }
-            for (name, value) in elements.into_iter() {
-                component_data.push(XmlElement {
-                    name: name.into(),
-                    data: ElementData::String(value),
-                    ..Default::default()
-                });
-            }
-            component.data = ElementData::Nested(component_data);
-            plugin.elements.push(component);
-            world.model.push(SdfModel {
-                name: lift.properties.name.0.clone(),
-                r#static: Some(lift.properties.is_static.0),
-                pose: Some(pose.to_sdf()),
-                link: vec![SdfLink {
-                    name: "platform".into(),
-                    collision: vec![SdfCollision {
-                        name: "collision".into(),
-                        geometry: SdfGeometry::Mesh(SdfMeshShape {
-                            uri: format!("meshes/lift_{}.glb", lift_id),
-                            ..Default::default()
-                        }),
-                        surface: Some(SdfSurface {
-                            contact: Some(SdfSurfaceContact {
-                                collide_bitmask: Some("0x04".into()),
+                for (name, value) in elements.into_iter() {
+                    component_data.push(XmlElement {
+                        name: name.into(),
+                        data: ElementData::String(value),
+                        ..Default::default()
+                    });
+                }
+                component.data = ElementData::Nested(component_data);
+                plugin.elements.push(component);
+                world.model.push(SdfModel {
+                    name: lift.properties.name.0.clone(),
+                    r#static: Some(lift.properties.is_static.0),
+                    pose: Some(pose.to_sdf()),
+                    link: vec![SdfLink {
+                        name: "platform".into(),
+                        collision: vec![SdfCollision {
+                            name: "collision".into(),
+                            geometry: SdfGeometry::Mesh(SdfMeshShape {
+                                uri: format!("meshes/lift_{}.glb", lift_id),
+                                ..Default::default()
+                            }),
+                            surface: Some(SdfSurface {
+                                contact: Some(SdfSurfaceContact {
+                                    collide_bitmask: Some("0x04".into()),
+                                    ..Default::default()
+                                }),
                                 ..Default::default()
                             }),
                             ..Default::default()
-                        }),
-                        ..Default::default()
-                    }],
-                    visual: vec![SdfVisual {
-                        name: "visual".into(),
-                        geometry: SdfGeometry::Mesh(SdfMeshShape {
-                            uri: format!("meshes/lift_{}.glb", lift_id),
+                        }],
+                        visual: vec![SdfVisual {
+                            name: "visual".into(),
+                            geometry: SdfGeometry::Mesh(SdfMeshShape {
+                                uri: format!("meshes/lift_{}.glb", lift_id),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        }],
+                        inertial: Some(SdfInertial {
+                            mass: Some(DEFAULT_CABIN_MASS),
+                            inertia: Some(
+                                lift.properties.cabin.moment_of_inertia(DEFAULT_CABIN_MASS),
+                            ),
                             ..Default::default()
                         }),
                         ..Default::default()
                     }],
-                    inertial: Some(SdfInertial {
-                        mass: Some(DEFAULT_CABIN_MASS),
-                        inertia: Some(lift.properties.cabin.moment_of_inertia(DEFAULT_CABIN_MASS)),
-                        ..Default::default()
-                    }),
+                    joint: lift_joints,
+                    model: lift_models,
+                    plugin: vec![plugin],
                     ..Default::default()
-                }],
-                joint: lift_joints,
-                model: lift_models,
-                plugin: vec![plugin],
-                ..Default::default()
-            });
-            // TODO(luca) lifts in the legacy pipeline seem to also have a "ramp" joint to allow
-            // easier transition of robots into lifts.
-            // From tests simulation seems to also work without it, probably due to having changed
-            // from full joint with wheel torques to just kinematic simulation for whole robots.
-        }
+                });
+                // TODO(luca) lifts in the legacy pipeline seem to also have a "ramp" joint to allow
+                // easier transition of robots into lifts.
+                // From tests simulation seems to also work without it, probably due to having changed
+                // from full joint with wheel torques to just kinematic simulation for whole robots.
+            }
+        } // if config.include_lifts
 
         // Export lights from all levels
-        let mut light_idx = 0u32;
-        for (_, level) in &self.levels {
-            let elevation = level.properties.elevation.0;
-            for (_, light) in &level.lights {
-                let sdf_light = light_to_sdf(light, &level.properties.name.0, elevation, light_idx);
-                world.light.push(sdf_light);
-                light_idx += 1;
+        if config.include_lights {
+            let mut light_idx = 0u32;
+            for (_, level) in &self.levels {
+                let elevation = level.properties.elevation.0;
+                for (_, light) in &level.lights {
+                    let sdf_light =
+                        light_to_sdf(light, &level.properties.name.0, elevation, light_idx);
+                    world.light.push(sdf_light);
+                    light_idx += 1;
+                }
             }
         }
 

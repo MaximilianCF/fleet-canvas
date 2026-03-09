@@ -25,7 +25,7 @@ use crate::{
     },
 };
 use bevy::{ecs::system::SystemParam, prelude::*};
-use bevy_egui::egui::{DragValue, ImageButton, Ui};
+use bevy_egui::egui::{CollapsingHeader, DragValue, ImageButton, Ui};
 use rmf_site_egui::*;
 use rmf_site_picking::Hover;
 use std::collections::{BTreeMap, BTreeSet};
@@ -215,15 +215,20 @@ impl<'w, 's> WidgetSystem<Inspect> for InspectAnchorDependents<'w, 's> {
         }
 
         panel.align(ui, |ui| {
-            ui.heading("Dependencies");
-            for (category, entities) in &category_map {
-                ui.label(category.label());
-                for e in entities {
-                    panel.orthogonal(ui, |ui| {
-                        world.show::<SelectorWidget, _, _>(*e, ui);
-                    });
-                }
-            }
+            let dep_count: usize = category_map.values().map(|s| s.len()).sum();
+            CollapsingHeader::new(format!("Dependencies ({dep_count})"))
+                .id_salt("anchor_dependents")
+                .default_open(false)
+                .show(ui, |ui| {
+                    for (category, entities) in &category_map {
+                        ui.label(category.label());
+                        for e in entities {
+                            panel.orthogonal(ui, |ui| {
+                                world.show::<SelectorWidget, _, _>(*e, ui);
+                            });
+                        }
+                    }
+                });
         });
     }
 }

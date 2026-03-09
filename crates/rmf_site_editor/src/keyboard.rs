@@ -19,7 +19,7 @@ use crate::{
     interaction::{SnapGridConfig, SnapToGrid},
     site::{AlignSiteDrawings, Delete, ToggleNavGraphView, ViewMenuItems},
     undo::{RedoRequest, UndoRequest},
-    widgets::Notifications,
+    widgets::{Notifications, SdfExportDialogState},
     CreateNewWorkspace, CurrentWorkspace, DebugMode, WorkspaceLoader, WorkspaceSaver,
 };
 use bevy::{prelude::*, window::PrimaryWindow};
@@ -55,6 +55,7 @@ fn handle_keyboard_input(
     mut snap: ResMut<SnapToGrid>,
     mut notifications: ResMut<Notifications>,
     mut grid_config: ResMut<SnapGridConfig>,
+    mut sdf_dialog: ResMut<SdfExportDialogState>,
 ) {
     let Some(egui_context) = primary_windows
         .single()
@@ -128,7 +129,7 @@ fn handle_keyboard_input(
         // Ctrl+T align handled in handle_keyboard_extras
 
         if keyboard_input.just_pressed(KeyCode::KeyE) {
-            workspace_saver.export_sdf_to_dialog();
+            sdf_dialog.show = true;
         }
 
         // TODO(luca) pop up a confirmation prompt if the current file is not saved, or create a

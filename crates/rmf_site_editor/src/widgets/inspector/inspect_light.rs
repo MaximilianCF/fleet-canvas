@@ -20,7 +20,9 @@ use crate::{
     widgets::{prelude::*, Inspect},
 };
 use bevy::prelude::*;
-use bevy_egui::egui::{color_picker::color_edit_button_rgb, ComboBox, DragValue, Ui};
+use bevy_egui::egui::{
+    color_picker::color_edit_button_rgb, CollapsingHeader, ComboBox, DragValue, Ui,
+};
 use rmf_site_egui::WidgetSystem;
 
 #[derive(SystemParam)]
@@ -89,19 +91,26 @@ impl<'a> InspectLightKind<'a> {
                             .speed(10),
                     );
                 });
-                ui.horizontal(|ui| {
-                    ui.label("Range");
-                    ui.add(DragValue::new(&mut point.range).range(0_f32..=std::f32::INFINITY));
-                });
-                ui.horizontal(|ui| {
-                    ui.label("Radius");
-                    ui.add(
-                        DragValue::new(&mut point.radius)
-                            .range(0_f32..=std::f32::INFINITY)
-                            .speed(0.1),
-                    );
-                });
-                ui.checkbox(&mut point.enable_shadows, "Enable Shadows");
+                CollapsingHeader::new("Advanced")
+                    .id_salt("light_point_advanced")
+                    .default_open(false)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Range");
+                            ui.add(
+                                DragValue::new(&mut point.range).range(0_f32..=std::f32::INFINITY),
+                            );
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Radius");
+                            ui.add(
+                                DragValue::new(&mut point.radius)
+                                    .range(0_f32..=std::f32::INFINITY)
+                                    .speed(0.1),
+                            );
+                        });
+                        ui.checkbox(&mut point.enable_shadows, "Enable Shadows");
+                    });
             }
             LightKind::Spot(spot) => {
                 ui.horizontal(|ui| {
@@ -116,19 +125,26 @@ impl<'a> InspectLightKind<'a> {
                             .speed(10),
                     );
                 });
-                ui.horizontal(|ui| {
-                    ui.label("Range");
-                    ui.add(DragValue::new(&mut spot.range).range(0_f32..=std::f32::INFINITY));
-                });
-                ui.horizontal(|ui| {
-                    ui.label("Radius");
-                    ui.add(
-                        DragValue::new(&mut spot.radius)
-                            .range(0_f32..=std::f32::INFINITY)
-                            .speed(0.1),
-                    );
-                });
-                ui.checkbox(&mut spot.enable_shadows, "Enable Shadows");
+                CollapsingHeader::new("Advanced")
+                    .id_salt("light_spot_advanced")
+                    .default_open(false)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Range");
+                            ui.add(
+                                DragValue::new(&mut spot.range).range(0_f32..=std::f32::INFINITY),
+                            );
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Radius");
+                            ui.add(
+                                DragValue::new(&mut spot.radius)
+                                    .range(0_f32..=std::f32::INFINITY)
+                                    .speed(0.1),
+                            );
+                        });
+                        ui.checkbox(&mut spot.enable_shadows, "Enable Shadows");
+                    });
             }
             LightKind::Directional(dir) => {
                 ui.horizontal(|ui| {

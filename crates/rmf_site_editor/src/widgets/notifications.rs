@@ -16,6 +16,7 @@ pub struct Toast {
 #[derive(Clone, Debug)]
 pub enum ToastKind {
     Success,
+    Warning,
     Error,
 }
 
@@ -23,6 +24,7 @@ impl ToastKind {
     fn color(&self) -> egui::Color32 {
         match self {
             ToastKind::Success => egui::Color32::from_rgb(50, 180, 80),
+            ToastKind::Warning => egui::Color32::from_rgb(210, 160, 40),
             ToastKind::Error => egui::Color32::from_rgb(200, 60, 60),
         }
     }
@@ -30,6 +32,7 @@ impl ToastKind {
     fn label(&self) -> &'static str {
         match self {
             ToastKind::Success => "OK",
+            ToastKind::Warning => "Warning",
             ToastKind::Error => "Error",
         }
     }
@@ -53,6 +56,14 @@ impl Notifications {
         self.toasts.push(Toast {
             message: message.into(),
             kind: ToastKind::Error,
+            timer: TOAST_DURATION_SECS,
+        });
+    }
+
+    pub fn warning(&mut self, message: impl Into<String>) {
+        self.toasts.push(Toast {
+            message: message.into(),
+            kind: ToastKind::Warning,
             timer: TOAST_DURATION_SECS,
         });
     }

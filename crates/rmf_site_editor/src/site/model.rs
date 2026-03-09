@@ -420,7 +420,21 @@ fn handle_model_loading_errors(
             }
             error!("{err}");
             let name = names.get(parent).map(|n| n.0.as_str()).unwrap_or("unknown");
-            notifications.error(format!("Failed to load model \"{name}\""));
+            let reason = match &err.kind {
+                ModelLoadingErrorKind::FailedLoadingAsset => "asset not found".to_string(),
+                ModelLoadingErrorKind::NonModelAsset => "file is not a 3D model".to_string(),
+                ModelLoadingErrorKind::InvalidAssetSource(s) => format!("invalid path: {s}"),
+                ModelLoadingErrorKind::AssetServerError(s) => {
+                    // Truncate long error messages
+                    if s.len() > 80 {
+                        format!("{}...", &s[..80])
+                    } else {
+                        s.clone()
+                    }
+                }
+                other => format!("{other}"),
+            };
+            notifications.error(format!("Failed to load model \"{name}\": {reason}"));
             if let Ok(mut entity_mut) = commands.get_entity(parent) {
                 // The parent entity might not exist any longer after the loading
                 // failed, so we check for its existence before inserting to it.
