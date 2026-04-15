@@ -104,6 +104,9 @@ pub use modifier::*;
 pub mod nav_graph;
 pub use nav_graph::*;
 
+pub mod nav_graph_lint;
+pub use nav_graph_lint::*;
+
 pub mod path;
 pub use path::*;
 
@@ -348,6 +351,12 @@ impl Plugin for SitePlugin {
         .add_issue_type(&DUPLICATED_DOCK_NAME_ISSUE_UUID, "Duplicated dock name")
         .add_issue_type(&DUPLICATED_LOCATION_NAME_ISSUE_UUID, "Duplicate location name")
         .add_issue_type(&UNCONNECTED_ANCHORS_ISSUE_UUID, "Unconnected anchors")
+        .add_issue_type(
+            &DISCONNECTED_NAV_GRAPH_ISSUE_UUID,
+            "Disconnected nav graph component",
+        )
+        .add_issue_type(&ISOLATED_LOCATION_ISSUE_UUID, "Isolated location")
+        .add_issue_type(&LANE_CLEARANCE_ISSUE_UUID, "Lane too close to wall")
         .add_systems(Update, (load_site, import_nav_graph))
         .add_systems(
             PreUpdate,
@@ -362,10 +371,19 @@ impl Plugin for SitePlugin {
                 check_for_duplicated_location_names,
                 check_for_fiducials_without_affiliation,
                 check_for_close_unconnected_anchors,
+                check_for_disconnected_nav_graph_components,
+                check_lane_clearance_to_walls,
                 check_for_orphan_model_instances,
                 check_for_hidden_model_instances,
                 check_for_accidentally_moved_instances,
                 check_for_invalid_level_assignments,
+            )
+                .after(SiteUpdateSet::ProcessChangesFlush)
+                .run_if(AppState::in_displaying_mode()),
+        )
+        .add_systems(
+            PreUpdate,
+            (
                 fetch_image_for_texture,
                 detect_last_selected_texture::<FloorMarker>,
                 apply_last_selected_texture::<FloorMarker>
