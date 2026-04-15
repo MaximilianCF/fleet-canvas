@@ -70,7 +70,9 @@ pub enum DaeError {
 }
 
 fn load_dae_mesh(text: &str) -> Result<Mesh, DaeError> {
-    let doc: Document = text.parse().map_err(|e: String| DaeError::ParseError(e))?;
+    let doc: Document = text
+        .parse::<Document>()
+        .map_err(|e| DaeError::ParseError(format!("{e:?}")))?;
 
     let mut all_positions: Vec<[f32; 3]> = Vec::new();
     let mut all_normals: Vec<[f32; 3]> = Vec::new();
@@ -157,7 +159,7 @@ fn load_dae_mesh(text: &str) -> Result<Mesh, DaeError> {
             let pos_offset = pos_source.accessor.offset;
 
             // Resolve normal source if present
-            let norm_floats = normal_offset.and_then(|_| {
+            let norm_floats: Option<(&Box<[f32]>, _, _)> = normal_offset.and_then(|_| {
                 let norm_input = inputs.iter().find(|i| i.semantic == Semantic::Normal)?;
                 let norm_source = maps.get(norm_input.source_as_source())?;
                 match &norm_source.array {
@@ -171,7 +173,7 @@ fn load_dae_mesh(text: &str) -> Result<Mesh, DaeError> {
             });
 
             // Resolve texcoord source if present
-            let uv_floats = texcoord_offset.and_then(|_| {
+            let uv_floats: Option<(&Box<[f32]>, _, _)> = texcoord_offset.and_then(|_| {
                 let uv_input = inputs.iter().find(|i| i.semantic == Semantic::TexCoord)?;
                 let uv_source = maps.get(uv_input.source_as_source())?;
                 match &uv_source.array {
