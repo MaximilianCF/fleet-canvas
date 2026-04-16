@@ -78,6 +78,7 @@ pub use inspect_measurement::*;
 pub mod inspect_model_description;
 pub use inspect_model_description::*;
 
+pub mod inspect_lane_badges;
 pub mod inspect_motion;
 pub use inspect_motion::*;
 
@@ -212,6 +213,7 @@ impl Plugin for StandardInspectorPlugin {
                 InspectionPlugin::<InspectLevel>::new(),
                 InspectModelDescriptionPlugin::default(),
                 InspectLiftPlugin::default(),
+                InspectionPlugin::<inspect_lane_badges::InspectLaneBadges>::new(),
             ))
             .add_plugins(
                 (

@@ -153,7 +153,7 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Status bar shows orange "Graph View" indicator when active
 - Normal mode retains nav graph colors (unchanged behavior)
 
-### v0.0.9 -- Robotics Workflow (in progress)
+### v0.0.9 -- Traffic & Scenario Preview
 
 **Nav Graph Connectivity Linter**
 - Per-graph union-find over lanes; emits diagnostics issue for every
@@ -176,6 +176,27 @@ Upstream repo: https://github.com/open-rmf/rmf_site
   turbofish on `parse::<Document>()`, `format!("{e:?}")` for the
   non-`Display` error type, and explicit `Option<(&Box<[f32]>, _, _)>`
   annotations on `norm_floats`/`uv_floats` inference sites.
+
+**Scenario Scrubber** (§3)
+- Bottom-panel timeline with play/pause/seek and speed selector (0.5×/1×/2×/4×)
+- Rewind button, live t = current/total display
+- Always visible when a successful MAPF plan exists
+
+**Lane Usage Heatmap** (§3)
+- Per-lane traversal count accumulated across all agent trajectories
+- Green→yellow→red color ramp normalized to peak usage
+- Gizmo overlay toggled via "Heatmap" checkbox in scrubber panel
+
+**Conflict Preview** (§3)
+- Detects two-agent spatial+temporal overlaps on shared lanes
+- Pulsing red gizmo line + cross marker at midpoint
+- Toggled via "Conflicts" checkbox in scrubber panel
+
+**Style & CI fixes** (housekeeping)
+- cargo fmt on all modified files
+- clippy: get_single() → single(), #[derive(Default)] on headless_validate
+- Replaced doublify pre-commit hook with local cargo fmt --check
+- Fixed 0-byte workcell.rs
 
 ### v0.0.8 -- P2/P3 Features & Repo Polish
 
@@ -318,13 +339,14 @@ Gazebo, and text editors.
 Makes `Scenario` and `Task` data visually actionable rather than just
 config text.
 
-- 🚧 **Scenario scrubber** — bottom-panel timeline with play/pause/seek
+- ✅ **Scenario scrubber** — bottom-panel timeline with play/pause/seek
   that animates scheduled tasks through the nav graph. Reuses
-  `rmf_site_animate`.
-- 🚧 **Lane usage heatmap** — per-lane usage accumulated across a
-  scenario, coloured by intensity to expose congestion hotspots.
-- 🚧 **Conflict preview** — in multi-robot scenarios, flash intersections
-  where two robots' time windows overlap on the same lane.
+  `rmf_site_animate` *(v0.0.9)*.
+- ✅ **Lane usage heatmap** — per-lane usage accumulated across a
+  scenario, coloured by intensity to expose congestion hotspots
+  *(v0.0.9)*.
+- ✅ **Conflict preview** — in multi-robot scenarios, flash intersections
+  where two robots' time windows overlap on the same lane *(v0.0.9)*.
 
 ### §4 — Drawing / fiducial alignment UX
 
@@ -374,11 +396,11 @@ tool.
 |---|---|---|
 | §1 Validation | 4 | 2 |
 | §2 Live round-trip | 2 | 0 |
-| §3 Scenario preview | 3 | 0 |
+| §3 Scenario preview | 3 | 3 |
 | §4 Drawing UX | 3 | 0 |
 | §5 UX polish | 6 | 0 |
 | §6 Collaboration | 3 | 0 |
-| **Total** | **21** | **2** |
+| **Total** | **21** | **5** |
 
 ---
 

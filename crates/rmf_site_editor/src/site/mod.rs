@@ -110,6 +110,9 @@ pub use nav_graph::*;
 pub mod nav_graph_lint;
 pub use nav_graph_lint::*;
 
+pub mod reachability_lint;
+pub use reachability_lint::*;
+
 pub mod path;
 pub use path::*;
 
@@ -360,6 +363,10 @@ impl Plugin for SitePlugin {
         )
         .add_issue_type(&ISOLATED_LOCATION_ISSUE_UUID, "Isolated location")
         .add_issue_type(&LANE_CLEARANCE_ISSUE_UUID, "Lane too close to wall")
+        .add_issue_type(
+            &DOOR_LIFT_REACHABILITY_ISSUE_UUID,
+            "Door/lift reachability gap",
+        )
         .add_systems(Update, (load_site, import_nav_graph))
         .add_systems(
             PreUpdate,
@@ -376,6 +383,7 @@ impl Plugin for SitePlugin {
                 check_for_close_unconnected_anchors,
                 check_for_disconnected_nav_graph_components,
                 check_lane_clearance_to_walls,
+                check_door_lift_reachability,
                 check_for_orphan_model_instances,
                 check_for_hidden_model_instances,
                 check_for_accidentally_moved_instances,
