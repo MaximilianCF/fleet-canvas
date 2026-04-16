@@ -46,6 +46,9 @@ pub mod visual;
 use std::thread;
 pub use visual::*;
 
+pub mod scenario_preview;
+pub use scenario_preview::*;
+
 #[derive(Default)]
 pub struct NegotiationPlugin;
 
@@ -57,6 +60,7 @@ impl Plugin for NegotiationPlugin {
             .init_resource::<PlanningProgressChannel>()
             .add_event::<SetAllPathVisibleRequest>()
             .add_plugins(NegotiationDebugPlugin::default())
+            .add_plugins(ScenarioPreviewPlugin::default())
             .add_systems(
                 Update,
                 (

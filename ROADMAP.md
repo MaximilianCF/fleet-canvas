@@ -153,6 +153,30 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Status bar shows orange "Graph View" indicator when active
 - Normal mode retains nav graph colors (unchanged behavior)
 
+### v0.0.9 -- Robotics Workflow (in progress)
+
+**Nav Graph Connectivity Linter**
+- Per-graph union-find over lanes; emits diagnostics issue for every
+  non-largest connected component, listing the offending lane entities.
+- Isolated-location detection: a `Location` associated with a nav graph
+  whose anchor is not touched by any lane in that graph is flagged as
+  unroutable by the fleet adapter.
+- New issue type: "Disconnected nav graph component" / "Isolated location"
+
+**Lane Clearance Check**
+- For each lane, min 2D segment-to-segment distance to walls on the same
+  level. Flags lanes within 0.35 m of a wall (typical delivery robot
+  footprint + safety margin).
+- Walls/lanes bucketed per `LevelElevation` via `AncestorIter` to avoid
+  cross-level false positives.
+- New issue type: "Lane too close to wall"
+
+**DAE Loader Fixes**
+- Repaired compile errors introduced by the `dae-parser 0.11` bump:
+  turbofish on `parse::<Document>()`, `format!("{e:?}")` for the
+  non-`Display` error type, and explicit `Option<(&Box<[f32]>, _, _)>`
+  annotations on `norm_floats`/`uv_floats` inference sites.
+
 ### v0.0.8 -- P2/P3 Features & Repo Polish
 
 **P3: Panel Declutter**
@@ -250,6 +274,111 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 **Remove .expect()/.unwrap()** (upstream #255)
 - Systematic replacement across codebase for robustness
+
+---
+
+## Robotics Workflow Features (pain-point driven)
+
+A parallel view of the roadmap grouped by the *class of pain* each feature
+addresses in an Open-RMF development workflow, rather than by priority
+tier. Useful when you already know which part of your workflow hurts.
+
+Legend: ✅ done · 🚧 in progress · ⏳ pending
+
+### §1 — Nav graph validation & feedback
+
+Catches authoring mistakes that would otherwise silently break the fleet
+adapter. All validators plug into the existing `ValidateWorkspace` event
+and `Diagnostics` panel.
+
+- ✅ **Connectivity linter** — per-graph union-find; disconnected
+  components, isolated locations, one-way dead-ends *(v0.0.9)*.
+- ✅ **Clearance check** — min 2D distance from each lane to same-level
+  walls; flags lanes narrower than robot footprint + safety margin
+  *(v0.0.9)*.
+- ⏳ **Door/lift reachability matrix** — for each `(level, fleet)` pair,
+  which locations are actually reachable. Catches "forgot to tag the lift
+  cabin lane".
+- ⏳ **Lane inline badges** — on selection, overlay with length, per-fleet
+  travel-time estimate, bidirectionality flag.
+
+### §2 — Live Open-RMF round-trip
+
+Closes the edit → test → fix loop so you stop bouncing between editor,
+Gazebo, and text editors.
+
+- ⏳ **"Launch in Gazebo" one-click** — button that exports the current
+  site and spawns `ros2 launch rmf_demos_gz` with the generated world.
+- ⏳ **ROS 2 fleet-state overlay** — desktop-only feature flag; subscribe
+  to `/fleet_states` and `/task_summaries` and render robot poses and
+  active task paths live on top of the site.
+
+### §3 — Traffic & scenario preview
+
+Makes `Scenario` and `Task` data visually actionable rather than just
+config text.
+
+- 🚧 **Scenario scrubber** — bottom-panel timeline with play/pause/seek
+  that animates scheduled tasks through the nav graph. Reuses
+  `rmf_site_animate`.
+- 🚧 **Lane usage heatmap** — per-lane usage accumulated across a
+  scenario, coloured by intensity to expose congestion hotspots.
+- 🚧 **Conflict preview** — in multi-robot scenarios, flash intersections
+  where two robots' time windows overlap on the same lane.
+
+### §4 — Drawing / fiducial alignment UX
+
+The most error-prone authoring step; feedback loop today is terrible.
+
+- ⏳ **Fiducial residual display** — per-fiducial residual error in mm
+  after alignment. Data already lives in `site/fiducial.rs`.
+- ⏳ **Drawing opacity + x-ray mode** — slider to see walls over the
+  floor plan. Essential when tracing.
+- ⏳ **Rectangular snap + ortho constraint** — shift-hold during wall
+  draw clamps to 0/45/90°. Hooks into `interaction/snap.rs`.
+
+### §5 — General UX polish
+
+Low-effort items a robotics dev notices in the first hour.
+
+- ⏳ **Measurement readouts everywhere** — selecting an edge shows its
+  length; selecting two anchors shows the distance. `interaction/measure.rs`
+  has the primitives.
+- ⏳ **Visibility presets** — "Hide everything except nav graph and
+  floors" etc. in `view_menu.rs`. Essential for screenshots and PR
+  reviews.
+- ⏳ **Minimap** — corner widget showing current level with camera
+  frustum.
+- ⏳ **Cursor coordinate display** — site frame + UTM if georeferenced.
+  `site/georeference.rs` already supports this.
+- ⏳ **Dark mode panels** — unify egui UI colours with the 3D viewport.
+- ⏳ **Search-by-name with goto camera** — extend `widgets/search_bar.rs`
+  to jump the camera to the result and flash-highlight it.
+
+### §6 — Collaboration / CI
+
+Makes the editor usable in a team workflow instead of a single-author
+tool.
+
+- ⏳ **Site file diff viewer** — render two `.site.json` side-by-side
+  with added/removed entities highlighted in the viewport. Makes PRs
+  reviewable without Gazebo.
+- ⏳ **Screenshot-on-save** to `docs/` using the headless render path
+  that `--export_sdf` already depends on.
+- ⏳ **`--validate` CLI mode** — run all §1 linters without UI and exit
+  non-zero on errors. Plug into CI to stop merging broken nav graphs.
+
+### Progress
+
+| Category | Total | Done |
+|---|---|---|
+| §1 Validation | 4 | 2 |
+| §2 Live round-trip | 2 | 0 |
+| §3 Scenario preview | 3 | 0 |
+| §4 Drawing UX | 3 | 0 |
+| §5 UX polish | 6 | 0 |
+| §6 Collaboration | 3 | 0 |
+| **Total** | **21** | **2** |
 
 ---
 
