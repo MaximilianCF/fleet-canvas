@@ -12,9 +12,8 @@ gh repo edit "$REPO" \
 
 echo "Setting repository topics..."
 gh api -X PUT "repos/$REPO/topics" \
-  -f '{"names":["robotics","rmf","bevy","rust","editor","gazebo","sdf","ros2","egui","linux"]}' \
-  --input - <<EOF
-{"names":["robotics","rmf","bevy","rust","editor","gazebo","sdf","ros2","egui","linux"]}
+  --input - <<'EOF'
+{"names":["robotics","rmf","fleet","bevy","rust","editor","gazebo","sdf","ros2","egui","linux"]}
 EOF
 
 echo "Setting homepage URL..."
