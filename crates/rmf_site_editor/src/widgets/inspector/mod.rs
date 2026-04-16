@@ -78,6 +78,7 @@ pub use inspect_measurement::*;
 pub mod inspect_model_description;
 pub use inspect_model_description::*;
 
+pub mod inspect_edge_length;
 pub mod inspect_lane_badges;
 pub mod inspect_motion;
 pub use inspect_motion::*;
@@ -214,6 +215,7 @@ impl Plugin for StandardInspectorPlugin {
                 InspectModelDescriptionPlugin::default(),
                 InspectLiftPlugin::default(),
                 InspectionPlugin::<inspect_lane_badges::InspectLaneBadges>::new(),
+                InspectionPlugin::<inspect_edge_length::InspectEdgeLength>::new(),
             ))
             .add_plugins(
                 (

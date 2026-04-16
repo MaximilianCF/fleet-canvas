@@ -82,6 +82,9 @@ pub struct ViewMenuItems {
     collisions: Entity,
     visuals: Entity,
     walls: Entity,
+    preset_nav_only: Entity,
+    preset_drawing: Entity,
+    preset_show_all: Entity,
 }
 
 impl FromWorld for ViewMenuItems {
@@ -194,6 +197,23 @@ impl FromWorld for ViewMenuItems {
             .insert(ChildOf(view_header))
             .id();
 
+        // Visibility presets
+        world
+            .spawn(MenuItem::Separator)
+            .insert(ChildOf(view_header));
+        let preset_nav_only = world
+            .spawn(MenuItem::Text("Preset: Nav Graph Only".into()))
+            .insert(ChildOf(view_header))
+            .id();
+        let preset_drawing = world
+            .spawn(MenuItem::Text("Preset: Drawing Mode".into()))
+            .insert(ChildOf(view_header))
+            .id();
+        let preset_show_all = world
+            .spawn(MenuItem::Text("Preset: Show All".into()))
+            .insert(ChildOf(view_header))
+            .id();
+
         ViewMenuItems {
             orthographic,
             perspective,
@@ -209,6 +229,9 @@ impl FromWorld for ViewMenuItems {
             collisions,
             visuals,
             walls,
+            preset_nav_only,
+            preset_drawing,
+            preset_show_all,
         }
     }
 }
@@ -260,6 +283,45 @@ fn handle_view_menu_events(
             events.visuals.write(toggle(event.source()).into());
         } else if event.clicked() && event.source() == view_menu.walls {
             events.walls.write(toggle(event.source()).into());
+        } else if event.clicked() && event.source() == view_menu.preset_nav_only {
+            // Nav Graph Only: show lanes, locations, floors — hide rest.
+            events.lanes.write(true.into());
+            events.locations.write(true.into());
+            events.floors.write(true.into());
+            events.doors.write(false.into());
+            events.lift_cabins.write(false.into());
+            events.lift_cabin_doors.write(false.into());
+            events.fiducials.write(false.into());
+            events.measurements.write(false.into());
+            events.collisions.write(false.into());
+            events.visuals.write(false.into());
+            events.walls.write(false.into());
+        } else if event.clicked() && event.source() == view_menu.preset_drawing {
+            // Drawing Mode: show walls, floors, fiducials, measurements — hide rest.
+            events.walls.write(true.into());
+            events.floors.write(true.into());
+            events.fiducials.write(true.into());
+            events.measurements.write(true.into());
+            events.doors.write(false.into());
+            events.lanes.write(false.into());
+            events.lift_cabins.write(false.into());
+            events.lift_cabin_doors.write(false.into());
+            events.locations.write(false.into());
+            events.collisions.write(false.into());
+            events.visuals.write(false.into());
+        } else if event.clicked() && event.source() == view_menu.preset_show_all {
+            // Show All: everything visible except collision meshes.
+            events.doors.write(true.into());
+            events.floors.write(true.into());
+            events.lanes.write(true.into());
+            events.lift_cabins.write(true.into());
+            events.lift_cabin_doors.write(true.into());
+            events.locations.write(true.into());
+            events.fiducials.write(true.into());
+            events.measurements.write(true.into());
+            events.collisions.write(false.into());
+            events.visuals.write(true.into());
+            events.walls.write(true.into());
         }
     }
 }

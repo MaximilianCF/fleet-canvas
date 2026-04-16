@@ -21,13 +21,15 @@ use crate::{
     AppState, CurrentWorkspace, Icons,
 };
 use bevy::prelude::*;
-use bevy_egui::egui::Button;
+use bevy_egui::egui::{self, Button};
 use rmf_site_egui::WidgetSystem;
+use rmf_site_format::LayerVisibility;
 
 #[derive(SystemParam)]
 pub struct InspectDrawing<'w, 's> {
     commands: Commands<'w, 's>,
     pixels_per_meter: Query<'w, 's, &'static PixelsPerMeter>,
+    layer_visibility: Query<'w, 's, &'static LayerVisibility>,
     current_workspace: Res<'w, CurrentWorkspace>,
     align_site: EventWriter<'w, AlignSiteDrawings>,
     app_state: Res<'w, State<AppState>>,
@@ -87,6 +89,29 @@ impl<'w, 's> WidgetSystem<Inspect> for InspectDrawing<'w, 's> {
             params
                 .commands
                 .trigger(Change::new(PixelsPerMeter(new_ppm), selection));
+        }
+
+        // Drawing opacity slider
+        if let Ok(vis) = params.layer_visibility.get(selection) {
+            let mut alpha = vis.alpha();
+            ui.add_space(4.0);
+            if ui
+                .add(
+                    egui::Slider::new(&mut alpha, 0.0..=1.0)
+                        .text("Opacity")
+                        .step_by(0.05),
+                )
+                .changed()
+            {
+                let new_vis = if alpha >= 1.0 {
+                    LayerVisibility::Opaque
+                } else if alpha <= 0.0 {
+                    LayerVisibility::Hidden
+                } else {
+                    LayerVisibility::Alpha(alpha)
+                };
+                params.commands.trigger(Change::new(new_vis, selection));
+            }
         }
     }
 }

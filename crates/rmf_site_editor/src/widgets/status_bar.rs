@@ -4,9 +4,10 @@ use rmf_site_camera::resources::ProjectionMode;
 
 use crate::{
     interaction::{SnapGridConfig, SnapToGrid},
-    site::NavGraphViewMode,
-    AppState,
+    site::{world_to_latlon, NavGraphViewMode},
+    AppState, CurrentWorkspace,
 };
+use rmf_site_format::GeographicComponent;
 
 use super::RenderUiSet;
 
@@ -37,6 +38,8 @@ fn render_status_bar(
     grid_config: Res<SnapGridConfig>,
     graph_view: Res<NavGraphViewMode>,
     measure_tool: Res<crate::interaction::MeasureTool>,
+    current_workspace: Res<CurrentWorkspace>,
+    geo_components: Query<&GeographicComponent>,
 ) {
     egui::TopBottomPanel::bottom("status_bar")
         .exact_height(22.0)
@@ -51,6 +54,24 @@ fn render_status_bar(
                     );
                 } else {
                     ui.label(egui::RichText::new("X: ---  Y: ---").monospace().small());
+                }
+
+                // Show lat/lon when georeferenced
+                if let Some(pos) = cursor_pos.position {
+                    let geo = current_workspace
+                        .root
+                        .and_then(|root| geo_components.get(root).ok())
+                        .and_then(|gc| gc.0);
+                    if let Some(offset) = geo {
+                        if let Ok((lat, lon)) = world_to_latlon(pos, offset.anchor) {
+                            ui.label(
+                                egui::RichText::new(format!("{lat:.4}°, {lon:.4}°"))
+                                    .monospace()
+                                    .small()
+                                    .color(egui::Color32::from_rgb(180, 200, 160)),
+                            );
+                        }
+                    }
                 }
 
                 ui.separator();

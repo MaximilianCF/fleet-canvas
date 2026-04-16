@@ -68,6 +68,18 @@ impl SelectionAlignmentBasis {
 
 pub type CursorTransformService = Service<BufferKey<SelectionAlignmentBasis>, ()>;
 
+/// Resource indicating whether shift-based ortho snap is active.
+#[derive(Resource, Default)]
+pub struct OrthoSnapActive(pub bool);
+
+/// System that reads the keyboard and updates the OrthoSnapActive resource.
+pub fn update_ortho_snap(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut ortho_snap: ResMut<OrthoSnapActive>,
+) {
+    ortho_snap.0 = keyboard.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]);
+}
+
 /// Update the virtual cursor transform while in select anchor mode
 pub fn select_anchor_cursor_transform(
     In(ContinuousService { key }): ContinuousServiceInput<BufferKey<SelectionAlignmentBasis>, ()>,

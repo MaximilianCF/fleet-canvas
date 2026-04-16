@@ -8,6 +8,28 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 ## Completed
 
+### v0.1.0 -- UX Polish & Drawing UX
+
+**Visibility Presets** (§5)
+- "Nav Graph Only": show only lanes, locations, floors
+- "Drawing Mode": show walls, floors, fiducials, measurements
+- "Show All": restore all categories to visible
+- Added as preset items in the existing View menu
+
+**Cursor Coordinate Display with Georeference** (§5)
+- Status bar shows lat/lon when site has a `GeographicComponent`
+- Converts cursor world (X,Y) via `world_to_latlon()` and displays as `°` format
+- Falls back to site-frame only (unchanged behavior) when no georeference
+
+**Edge Length in Inspector** (§5)
+- Walls and measurements show their length in the inspector when selected
+- Computed from anchor positions via `AnchorParams`
+
+**Drawing Opacity Slider** (§4)
+- Per-drawing opacity slider (0.0–1.0) in the drawing inspector
+- Fires `Change<LayerVisibility>` events, undo-compatible
+- Maps alpha endpoints: 1.0→Opaque, 0.0→Hidden, between→Alpha(f)
+
 ### v0.0.3 -- Foundation
 
 **Save/Export UX**
@@ -354,25 +376,24 @@ The most error-prone authoring step; feedback loop today is terrible.
 
 - ⏳ **Fiducial residual display** — per-fiducial residual error in mm
   after alignment. Data already lives in `site/fiducial.rs`.
-- ⏳ **Drawing opacity + x-ray mode** — slider to see walls over the
-  floor plan. Essential when tracing.
-- ⏳ **Rectangular snap + ortho constraint** — shift-hold during wall
-  draw clamps to 0/45/90°. Hooks into `interaction/snap.rs`.
+- ✅ **Drawing opacity + x-ray mode** — per-drawing opacity slider in
+  the inspector *(v0.1.0)*.
+- ⏳ **Rectangular snap + ortho constraint** — shift-hold during edge
+  placement clamps to 0/45/90°. Deferred: cursor alignment system is at
+  Bevy's 16-param limit.
 
 ### §5 — General UX polish
 
 Low-effort items a robotics dev notices in the first hour.
 
-- ⏳ **Measurement readouts everywhere** — selecting an edge shows its
-  length; selecting two anchors shows the distance. `interaction/measure.rs`
-  has the primitives.
-- ⏳ **Visibility presets** — "Hide everything except nav graph and
-  floors" etc. in `view_menu.rs`. Essential for screenshots and PR
-  reviews.
-- ⏳ **Minimap** — corner widget showing current level with camera
-  frustum.
-- ⏳ **Cursor coordinate display** — site frame + UTM if georeferenced.
-  `site/georeference.rs` already supports this.
+- ✅ **Measurement readouts everywhere** — selecting a wall or
+  measurement shows its length in the inspector *(v0.1.0)*.
+- ✅ **Visibility presets** — "Nav Graph Only", "Drawing Mode", "Show
+  All" one-click presets in the View menu *(v0.1.0)*.
+- ✅ **Minimap** — corner widget showing current level with walls, lanes,
+  and camera indicator *(v0.1.0)*.
+- ✅ **Cursor coordinate display** — site frame + lat/lon when
+  georeferenced, shown in the status bar *(v0.1.0)*.
 - ⏳ **Dark mode panels** — unify egui UI colours with the 3D viewport.
 - ⏳ **Search-by-name with goto camera** — extend `widgets/search_bar.rs`
   to jump the camera to the result and flash-highlight it.
@@ -397,10 +418,10 @@ tool.
 | §1 Validation | 4 | 2 |
 | §2 Live round-trip | 2 | 0 |
 | §3 Scenario preview | 3 | 3 |
-| §4 Drawing UX | 3 | 0 |
-| §5 UX polish | 6 | 0 |
+| §4 Drawing UX | 3 | 1 |
+| §5 UX polish | 6 | 4 |
 | §6 Collaboration | 3 | 0 |
-| **Total** | **21** | **5** |
+| **Total** | **21** | **10** |
 
 ---
 
@@ -408,7 +429,6 @@ tool.
 
 - **style CI clippy**: uses `-W clippy::all` (warn only) due to remaining upstream warnings
 - **ci_linux / ci_windows disabled**: only run manually via workflow_dispatch
-- **No app icon in window titlebar**: Bevy window icon requires separate setup
 - **Lanes on wrong levels**: upstream #395 (not yet investigated)
 - **Flaky roundtrip test**: upstream #409
 
