@@ -16,7 +16,7 @@
 */
 
 use crate::exit_confirmation::SiteChanged;
-use crate::undo::{UndoHistory, record_change};
+use crate::undo::{record_change, UndoHistory};
 use bevy::{ecs::component::Mutable, prelude::*};
 use std::fmt::Debug;
 

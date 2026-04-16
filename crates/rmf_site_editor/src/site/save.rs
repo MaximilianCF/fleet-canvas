@@ -33,8 +33,8 @@ use std::{
 use thiserror::Error as ThisError;
 
 use crate::{
-    ExportFormat, exit_confirmation::SiteChanged, recency::RecencyRanking, site::*,
-    widgets::Notifications,
+    exit_confirmation::SiteChanged, recency::RecencyRanking, site::*, widgets::Notifications,
+    ExportFormat,
 };
 use rmf_site_format::*;
 use sdformat::yaserde;

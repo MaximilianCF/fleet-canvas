@@ -23,7 +23,7 @@ use crate::site::{Category, CurrentLevel, LevelElevation};
 use bevy::ecs::hierarchy::ChildOf;
 use bevy::ecs::relationship::AncestorIter;
 use bevy::prelude::*;
-use bevy_egui::{EguiContexts, egui};
+use bevy_egui::{egui, EguiContexts};
 use rmf_site_format::{AnchorParams, Edge, LaneMarker, WallMarker};
 
 const MINIMAP_SIZE: f32 = 200.0;

@@ -1,8 +1,8 @@
-use crate::{AppState, WorkspaceSaver, widgets::RenderUiSet};
+use crate::{widgets::RenderUiSet, AppState, WorkspaceSaver};
 use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::window::{PrimaryWindow, WindowCloseRequested};
-use bevy_egui::{EguiContexts, egui};
+use bevy_egui::{egui, EguiContexts};
 
 const BASE_TITLE: &str = "RMF Site Editor";
 

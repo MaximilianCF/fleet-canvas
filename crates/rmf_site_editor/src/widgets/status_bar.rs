@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use bevy_egui::{EguiContexts, egui};
+use bevy_egui::{egui, EguiContexts};
 use rmf_site_camera::resources::ProjectionMode;
 
 use crate::{
-    AppState,
     interaction::{SnapGridConfig, SnapToGrid},
     site::NavGraphViewMode,
+    AppState,
 };
 
 use super::RenderUiSet;

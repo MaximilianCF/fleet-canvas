@@ -20,9 +20,9 @@ use crossflow::*;
 use rfd::AsyncFileDialog;
 use std::{future::Future, path::PathBuf};
 
-use crate::AppState;
 use crate::interaction::InteractionState;
 use crate::site::{DefaultFile, ImportNavGraphs, LoadSite, LoadSiteResult, SaveSite};
+use crate::AppState;
 use rmf_site_format::{NameOfSite, Site};
 use rmf_site_picking::Selection;
 

@@ -18,8 +18,8 @@
 use crate::{
     interaction::{Hovered, Selected},
     site::{
-        HOVER_COLOR, HOVER_SELECT_COLOR, SELECT_COLOR, STANDARD_GRID_LINE_COLOR,
-        as_minor_line_color,
+        as_minor_line_color, HOVER_COLOR, HOVER_SELECT_COLOR, SELECT_COLOR,
+        STANDARD_GRID_LINE_COLOR,
     },
 };
 use bevy::prelude::*;

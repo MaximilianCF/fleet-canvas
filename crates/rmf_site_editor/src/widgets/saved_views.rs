@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_egui::egui::{self, Ui};
-use rmf_site_camera::{ActiveCameraQuery, active_camera_maybe, resources::CameraConfig};
+use rmf_site_camera::{active_camera_maybe, resources::CameraConfig, ActiveCameraQuery};
 use rmf_site_egui::*;
 use rmf_site_format::{NameInSite, Pose, UserCameraPoseMarker};
 
