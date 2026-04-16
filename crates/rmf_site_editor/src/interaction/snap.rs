@@ -41,3 +41,12 @@ impl SnapToGrid {
     /// Available grid size presets (in meters).
     pub const PRESETS: &[f32] = &[0.1, 0.25, 0.5, 1.0, 2.0, 5.0];
 }
+
+/// Set each frame by [`update_ortho_snap`]. True when Shift is held.
+#[derive(Resource, Default)]
+pub struct OrthoSnapActive(pub bool);
+
+/// Reads the keyboard each frame and updates [`OrthoSnapActive`].
+pub fn update_ortho_snap(keyboard: Res<ButtonInput<KeyCode>>, mut ortho: ResMut<OrthoSnapActive>) {
+    ortho.0 = keyboard.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]);
+}

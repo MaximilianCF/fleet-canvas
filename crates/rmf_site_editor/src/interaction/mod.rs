@@ -168,6 +168,8 @@ impl Plugin for InteractionPlugin {
             .init_resource::<Cursor>()
             .init_resource::<GizmoState>()
             .init_resource::<SnapToGrid>()
+            .init_resource::<OrthoSnapActive>()
+            .add_systems(PreUpdate, update_ortho_snap)
             .init_resource::<CurrentEditDrawing>()
             .init_resource::<CurrentLevel>()
             .insert_resource(HighlightAnchors(false))

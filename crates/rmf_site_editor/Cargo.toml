@@ -68,6 +68,8 @@ clap = { workspace = true, features = ["color", "derive", "help", "usage", "sugg
 bevy_egui = { workspace = true, default-features = true }
 crossflow = { workspace = true}
 web-time = {workspace = true}
+image = { version = "0.25", default-features = false, features = ["png"] }
+winit = { version = "0.30", default-features = false }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 bevy_egui = { workspace = true, default-features = false, features = ["open_url", "default_fonts", "render"] }

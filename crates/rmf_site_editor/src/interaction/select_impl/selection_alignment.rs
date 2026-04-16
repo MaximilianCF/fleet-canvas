@@ -15,7 +15,7 @@
  *
 */
 
-use bevy::{ecs::relationship::AncestorIter, prelude::*};
+use bevy::{ecs::relationship::AncestorIter, ecs::system::SystemParam, prelude::*};
 use crossflow::prelude::{
     BufferAccess, BufferKey, ContinuousQuery, ContinuousService, ContinuousServiceInput, Service,
 };
@@ -23,9 +23,17 @@ use crossflow::prelude::{
 use super::CreationSettings;
 
 use crate::{
-    interaction::{Cursor, Hovered, IntersectGroundPlaneParams, Preview},
+    interaction::{Cursor, Hovered, IntersectGroundPlaneParams, OrthoSnapActive, Preview},
     site::{Anchor, Category, CurrentLevel, Edge, LiftCabin, Pending, ReferenceGrid},
 };
+
+/// Bundles the reference grid and ortho snap into a single system parameter
+/// so we stay within Bevy's 16-param limit on `select_anchor_cursor_transform`.
+#[derive(SystemParam)]
+pub struct CursorSnapParams<'w> {
+    pub grid: Option<Res<'w, ReferenceGrid>>,
+    pub ortho: Res<'w, OrthoSnapActive>,
+}
 
 /// The alignment system needs some context about what is being created so it
 /// can make appropriate calculations for how to align the cursor. Element
@@ -68,18 +76,6 @@ impl SelectionAlignmentBasis {
 
 pub type CursorTransformService = Service<BufferKey<SelectionAlignmentBasis>, ()>;
 
-/// Resource indicating whether shift-based ortho snap is active.
-#[derive(Resource, Default)]
-pub struct OrthoSnapActive(pub bool);
-
-/// System that reads the keyboard and updates the OrthoSnapActive resource.
-pub fn update_ortho_snap(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut ortho_snap: ResMut<OrthoSnapActive>,
-) {
-    ortho_snap.0 = keyboard.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]);
-}
-
 /// Update the virtual cursor transform while in select anchor mode
 pub fn select_anchor_cursor_transform(
     In(ContinuousService { key }): ContinuousServiceInput<BufferKey<SelectionAlignmentBasis>, ()>,
@@ -98,7 +94,7 @@ pub fn select_anchor_cursor_transform(
     mut hovered: Query<&mut Hovered>,
     mut previous_aligned: Local<Option<Entity>>,
     mut cache: Local<Option<AlignmentCache>>,
-    grid: Option<Res<ReferenceGrid>>,
+    snap_params: CursorSnapParams,
 ) {
     let Some(orders) = orders.view(&key) else {
         if let Some(previous) = previous_aligned.take() {
@@ -237,7 +233,7 @@ pub fn select_anchor_cursor_transform(
                         .into();
                     let p0 = tf.transform_point(p0.extend(0.0)).truncate();
 
-                    let grid = grid.map(|g| **g);
+                    let grid = snap_params.grid.as_deref().map(|g| **g);
                     lines.push(Line::x_axis(p0, grid));
                     lines.push(Line::y_axis(p0, grid));
                 }
@@ -289,6 +285,34 @@ pub fn select_anchor_cursor_transform(
         }
 
         x
+    };
+
+    // Ortho constraint: when Shift is held, snap to nearest 45° from base anchor.
+    let position = if snap_params.ortho.0 {
+        let base_anchor_id = basis
+            .get_newest(order.request())
+            .and_then(|s| s.base_anchor);
+        if let Some(base_id) = base_anchor_id {
+            if let Ok(base_tf) = global_transforms.get(base_id) {
+                let base_pos = base_tf.translation().truncate();
+                let delta = position - base_pos;
+                let dist = delta.length();
+                if dist > 1e-4 {
+                    let angle = delta.y.atan2(delta.x);
+                    let snap =
+                        (angle / std::f32::consts::FRAC_PI_4).round() * std::f32::consts::FRAC_PI_4;
+                    base_pos + Vec2::new(snap.cos(), snap.sin()) * dist
+                } else {
+                    position
+                }
+            } else {
+                position
+            }
+        } else {
+            position
+        }
+    } else {
+        position
     };
 
     let mut transform = match transforms.get_mut(cursor.frame) {

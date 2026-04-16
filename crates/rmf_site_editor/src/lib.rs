@@ -356,6 +356,9 @@ impl Plugin for SiteEditor {
 
             #[cfg(not(target_arch = "wasm32"))]
             app.add_plugins(UserPreferencesPlugin);
+
+            #[cfg(not(target_arch = "wasm32"))]
+            app.add_systems(Startup, set_window_icon);
         }
 
         if self.is_headless_export() {
@@ -382,5 +385,27 @@ impl Plugin for SiteEditor {
             app.insert_resource(site::HeadlessValidateState::default());
             app.add_systems(Last, site::headless_validate);
         }
+    }
+}
+
+/// Load the window icon from the bundled PNG. Desktop-only.
+#[cfg(not(target_arch = "wasm32"))]
+fn set_window_icon(
+    windows: NonSend<bevy::winit::WinitWindows>,
+    primary: Query<Entity, With<bevy::window::PrimaryWindow>>,
+) {
+    let Ok(entity) = primary.single() else {
+        return;
+    };
+    let Some(window) = windows.get_window(entity) else {
+        return;
+    };
+    let bytes = include_bytes!("../../../packaging/rmf-site-editor.png");
+    let img = image::load_from_memory(bytes)
+        .expect("icon PNG is valid")
+        .into_rgba8();
+    let (w, h) = img.dimensions();
+    if let Ok(icon) = winit::window::Icon::from_rgba(img.into_raw(), w, h) {
+        window.set_window_icon(Some(icon));
     }
 }

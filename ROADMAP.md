@@ -30,6 +30,16 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Fires `Change<LayerVisibility>` events, undo-compatible
 - Maps alpha endpoints: 1.0→Opaque, 0.0→Hidden, between→Alpha(f)
 
+**Ortho Constraint** (§4)
+- Hold Shift during edge/wall placement to snap to 0°/45°/90° angles
+- `OrthoSnapActive` resource updated each frame, read via `CursorSnapParams`
+  SystemParam bundle to stay within Bevy's 16-param limit
+
+**Window Icon** (Known Issues fix)
+- Native window icon loaded from `packaging/rmf-site-editor.png` via
+  `include_bytes!` + `image::load_from_memory` + `winit::window::Icon`
+- Desktop-only startup system
+
 ### v0.0.3 -- Foundation
 
 **Save/Export UX**
@@ -378,9 +388,9 @@ The most error-prone authoring step; feedback loop today is terrible.
   after alignment. Data already lives in `site/fiducial.rs`.
 - ✅ **Drawing opacity + x-ray mode** — per-drawing opacity slider in
   the inspector *(v0.1.0)*.
-- ⏳ **Rectangular snap + ortho constraint** — shift-hold during edge
-  placement clamps to 0/45/90°. Deferred: cursor alignment system is at
-  Bevy's 16-param limit.
+- ✅ **Rectangular snap + ortho constraint** — shift-hold during edge
+  placement clamps to 0/45/90° via `CursorSnapParams` SystemParam bundle
+  *(v0.1.0)*.
 
 ### §5 — General UX polish
 
@@ -418,10 +428,10 @@ tool.
 | §1 Validation | 4 | 2 |
 | §2 Live round-trip | 2 | 0 |
 | §3 Scenario preview | 3 | 3 |
-| §4 Drawing UX | 3 | 1 |
+| §4 Drawing UX | 3 | 2 |
 | §5 UX polish | 6 | 4 |
 | §6 Collaboration | 3 | 0 |
-| **Total** | **21** | **10** |
+| **Total** | **21** | **11** |
 
 ---
 
