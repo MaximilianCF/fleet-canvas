@@ -47,6 +47,9 @@ use crate::AppState;
 use bevy::{ecs::system::SystemState, prelude::*};
 use bevy_egui::{egui, EguiContexts};
 
+pub mod about_dialog;
+pub use about_dialog::*;
+
 pub mod building_preview;
 use building_preview::*;
 
@@ -61,6 +64,9 @@ use diagnostics::*;
 
 pub mod edit_menu;
 use edit_menu::*;
+
+pub mod feature_guide;
+pub use feature_guide::*;
 
 pub mod fuel_asset_browser;
 pub use fuel_asset_browser::*;
@@ -204,7 +210,12 @@ impl Plugin for StandardUiPlugin {
                 #[cfg(not(target_arch = "wasm32"))]
                 NavGraphIoPlugin::default(),
             ))
-            .add_plugins((MinimapPlugin::default(), SiteDiffPlugin::default()))
+            .add_plugins((
+                MinimapPlugin::default(),
+                SiteDiffPlugin::default(),
+                FeatureGuidePlugin::default(),
+                AboutDialogPlugin::default(),
+            ))
             .add_systems(Startup, init_ui_style)
             .add_systems(
                 Update,

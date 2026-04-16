@@ -8,6 +8,29 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 ## Completed
 
+### v0.1.1 -- Onboarding & Identity
+
+**About Dialog** (Help > About)
+- Centered modal with Fleet Canvas branding, version, license, credits
+- GitHub hyperlink, platform info
+- Help menu with About and Feature Guide items
+
+**Feature Guide** (Help > Feature Guide)
+- 6-page paginated tour: Welcome, Site Editing, Nav Graphs, Scenario
+  Preview, Export, Tips & Help
+- First-run detection via sentinel file in `~/.config/rmf_site_editor/`
+- Dismissable with Skip / Start editing, reopenable from Help menu
+
+**Welcome Screen Identity**
+- Title renamed to "Fleet Canvas" with `v{VERSION} · Desktop Edition`
+- Version sourced from `env!("CARGO_PKG_VERSION")`
+
+**Desktop & AppStream Metadata**
+- `.desktop` file updated: name → Fleet Canvas, proper categories,
+  GenericName, StartupNotify, MimeType
+- New AppStream metainfo XML for GNOME Software / app store discovery
+- metainfo registered in cargo-deb assets for `.deb` packaging
+
 ### v0.1.0 -- UX Polish & Drawing UX
 
 **Visibility Presets** (§5)

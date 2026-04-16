@@ -1,10 +1,12 @@
 [Desktop Entry]
-Name=RMF Site Editor
-Comment=Visual editor for robot fleet management sites
-Exec=rmf_site_editor %F
+Name=Fleet Canvas
+GenericName=Robot Fleet Site Editor
+Comment=Visual editor for Open-RMF robot fleet deployment sites
+Exec=rmf_site_editor %f
 Icon=rmf-site-editor
-Terminal=false
 Type=Application
-Categories=Development;Engineering;Science;
-MimeType=application/json;
-Keywords=robotics;rmf;fleet;site;editor;gazebo;
+Categories=Science;Engineering;Graphics;
+Keywords=robotics;rmf;fleet;navigation;ros;gazebo;editor;
+StartupNotify=true
+MimeType=application/x-site-json;
+Terminal=false

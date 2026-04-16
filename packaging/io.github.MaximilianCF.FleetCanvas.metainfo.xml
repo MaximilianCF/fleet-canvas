@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.MaximilianCF.FleetCanvas</id>
+  <name>Fleet Canvas</name>
+  <summary>Visual editor for Open-RMF robot fleet deployment sites</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <developer_name>MaximilianCF</developer_name>
+
+  <description>
+    <p>
+      Fleet Canvas is a native Linux desktop editor for designing and
+      validating Open-RMF robot fleet deployment sites. Draw multi-level
+      buildings with navigation graphs, validate lane connectivity and
+      clearance, preview MAPF scenarios, and export to Gazebo SDF with
+      ROS 2 launch files.
+    </p>
+    <p>Features include:</p>
+    <ul>
+      <li>Multi-level building editor (walls, floors, doors, lifts)</li>
+      <li>Navigation graph editor with robot and human lane types</li>
+      <li>Nav graph validation: connectivity, clearance, reachability</li>
+      <li>MAPF scenario preview with heatmap and conflict detection</li>
+      <li>SDF and ROS 2 launch file export</li>
+      <li>Fuel asset browser integration</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">rmf-site-editor.desktop</launchable>
+
+  <url type="homepage">https://github.com/MaximilianCF/fleet-canvas</url>
+  <url type="bugtracker">https://github.com/MaximilianCF/fleet-canvas/issues</url>
+
+  <provides>
+    <binary>rmf_site_editor</binary>
+  </provides>
+
+  <categories>
+    <category>Science</category>
+    <category>Engineering</category>
+  </categories>
+
+  <keywords>
+    <keyword>robotics</keyword>
+    <keyword>rmf</keyword>
+    <keyword>fleet</keyword>
+    <keyword>navigation</keyword>
+    <keyword>ros</keyword>
+    <keyword>gazebo</keyword>
+  </keywords>
+
+  <releases>
+    <release version="0.1.0" date="2026-04-16">
+      <description>
+        <p>First stable release. Includes nav graph validation,
+        MAPF scenario preview, drawing UX tools, and full UX polish.</p>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

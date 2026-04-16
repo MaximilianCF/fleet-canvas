@@ -202,16 +202,16 @@ fn egui_ui(
             ui.vertical_centered(|ui| {
                 // Title
                 ui.label(
-                    egui::RichText::new("RMF Site Editor")
+                    egui::RichText::new("Fleet Canvas")
                         .size(32.0)
                         .strong()
                         .color(egui::Color32::from_rgb(240, 240, 240)),
                 );
                 ui.add_space(4.0);
                 ui.label(
-                    egui::RichText::new(format!("v{VERSION}  --  Desktop Edition"))
+                    egui::RichText::new(format!("v{VERSION}  \u{00B7}  Desktop Edition"))
                         .size(13.0)
-                        .color(egui::Color32::from_rgb(140, 140, 150)),
+                        .color(egui::Color32::from_rgb(140, 140, 160)),
                 );
 
                 ui.add_space(40.0);
