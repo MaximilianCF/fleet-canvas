@@ -110,6 +110,10 @@ pub struct CommandLineArgs {
     /// This requires you to specify FILENAME, and it can be used with export_sdf.
     #[cfg_attr(not(target_arch = "wasm32"), arg(long))]
     pub export_nav: Option<String>,
+    /// Run in headless mode, execute all site validators, print results, and
+    /// exit with non-zero if any issues are found. For CI pipelines.
+    #[cfg_attr(not(target_arch = "wasm32"), arg(long))]
+    pub validate: bool,
 }
 
 #[derive(Clone, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -161,6 +165,8 @@ pub struct SiteEditor {
     /// saving the contents of the site as a new path. This is primarily used
     /// for unit testing.
     save_as_path: Option<String>,
+    /// When true, run validators headlessly and exit with non-zero on issues.
+    validate: bool,
 }
 
 impl SiteEditor {
@@ -171,6 +177,7 @@ impl SiteEditor {
     pub fn from_cli_args(command_line_args: Vec<String>) -> Self {
         let mut _export_sdf = None;
         let mut _export_nav = None;
+        let mut _validate = false;
         let mut autoload = None;
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -184,6 +191,7 @@ impl SiteEditor {
             }
             _export_sdf = command_line_args.export_sdf;
             _export_nav = command_line_args.export_nav;
+            _validate = command_line_args.validate;
         }
 
         Self {
@@ -191,6 +199,7 @@ impl SiteEditor {
             export_nav: _export_nav,
             autoload,
             save_as_path: None,
+            validate: _validate,
         }
     }
 
@@ -210,13 +219,17 @@ impl SiteEditor {
     }
 
     pub fn is_headless(&self) -> bool {
-        self.is_headless_export()
+        self.is_headless_export() || self.is_headless_validate()
     }
 
     // This is a separate function from is_headless just in case there are other
     // reasons to run headless in the future, e.g. headless simulation.
     pub fn is_headless_export(&self) -> bool {
         self.export_sdf.is_some() || self.export_nav.is_some() || self.save_as_path.is_some()
+    }
+
+    pub fn is_headless_validate(&self) -> bool {
+        self.validate
     }
 }
 
@@ -358,6 +371,16 @@ impl Plugin for SiteEditor {
                 self.save_as_path.clone(),
             ));
             app.add_systems(Last, site::headless_export);
+        }
+
+        if self.is_headless_validate() {
+            if !self.is_headless_export() {
+                app.add_plugins(ScheduleRunnerPlugin::run_loop(
+                    std::time::Duration::from_secs_f64(1.0 / 10.0),
+                ));
+            }
+            app.insert_resource(site::HeadlessValidateState::default());
+            app.add_systems(Last, site::headless_validate);
         }
     }
 }

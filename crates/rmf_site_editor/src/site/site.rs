@@ -95,9 +95,9 @@ pub fn on_change_site(
             .is_none()
         {
             error!(
-                    "Requested level change to an entity {:?} that is not a level of the requested site {:?}",
-                    chosen_level, cmd.site,
-                );
+                "Requested level change to an entity {:?} that is not a level of the requested site {:?}",
+                chosen_level, cmd.site,
+            );
             return;
         }
     }

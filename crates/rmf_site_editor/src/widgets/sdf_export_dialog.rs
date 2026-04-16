@@ -74,6 +74,36 @@ fn render_sdf_export_dialog(
                     dialog.show = false;
                 }
             });
+
+            ui.add_space(4.0);
+            ui.separator();
+            ui.add_space(4.0);
+            ui.label("Or launch a previously exported world:");
+            #[cfg(not(target_arch = "wasm32"))]
+            if ui
+                .button("🚀 Launch in Gazebo...")
+                .on_hover_text("Pick a launch.py from a previous SDF export")
+                .clicked()
+            {
+                dialog.show = false;
+                std::thread::spawn(|| {
+                    let file = rfd::FileDialog::new()
+                        .add_filter("ROS 2 launch", &["py"])
+                        .set_title("Select the exported launch.py")
+                        .pick_file();
+                    if let Some(path) = file {
+                        info!("Launching Gazebo with: {}", path.display());
+                        match std::process::Command::new("ros2")
+                            .arg("launch")
+                            .arg(&path)
+                            .spawn()
+                        {
+                            Ok(_) => info!("Gazebo process spawned"),
+                            Err(e) => error!("Failed to launch Gazebo: {e}. Is ros2 on your PATH?"),
+                        }
+                    }
+                });
+            }
         });
 
     if !open {

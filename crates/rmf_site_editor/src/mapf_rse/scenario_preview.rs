@@ -229,10 +229,7 @@ fn recompute_scenario_analysis(
     // Flatten all per-level lane lists into one big list. The robots in a
     // MAPF plan share an occupancy grid for a single level, so for now we do
     // not disambiguate by level during projection — the closest lane wins.
-    let flat: Vec<(Entity, Vec2, Vec2)> = lane_segments
-        .into_values()
-        .flatten()
-        .collect();
+    let flat: Vec<(Entity, Vec2, Vec2)> = lane_segments.into_values().flatten().collect();
     if flat.is_empty() {
         return;
     }

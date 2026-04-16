@@ -32,4 +32,3 @@ jobs:
         cargo -V
         cargo test
       shell: cmd
-

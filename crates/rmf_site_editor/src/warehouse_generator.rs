@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::building_map::BuildingMap;
 use crate::despawn::*;
 use crate::level::Level;
@@ -7,9 +8,8 @@ use crate::settings::*;
 use crate::spawner::Spawner;
 use crate::vertex::Vertex;
 use crate::wall::{Wall, WallProperties};
-use crate::AppState;
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContext};
+use bevy_egui::{EguiContext, egui};
 
 #[derive(Default, Clone)]
 struct Warehouse {

@@ -41,8 +41,7 @@ pub const ISOLATED_LOCATION_ISSUE_UUID: Uuid =
     Uuid::from_u128(0x9a2b7e1d4c3f48e2b1a6d5f4c3e21d7bu128);
 
 /// A lane segment whose corridor is narrower than the safe clearance from walls.
-pub const LANE_CLEARANCE_ISSUE_UUID: Uuid =
-    Uuid::from_u128(0x3d7e5a9c2b1f44e1a9c8b7d6f5e4c3d2u128);
+pub const LANE_CLEARANCE_ISSUE_UUID: Uuid = Uuid::from_u128(0x3d7e5a9c2b1f44e1a9c8b7d6f5e4c3d2u128);
 
 /// Minimum safe distance in meters from any lane segment to a wall segment.
 /// Derived from a typical RMF delivery robot footprint (~0.5 m diameter) plus
@@ -94,10 +93,7 @@ pub fn check_for_disconnected_nav_graph_components(
     mut validate_events: EventReader<ValidateWorkspace>,
     child_of: Query<&ChildOf>,
     graphs: Query<(Entity, Option<&NameInSite>), With<NavGraphMarker>>,
-    lanes: Query<
-        (Entity, &Edge<Entity>, &AssociatedGraphs<Entity>),
-        With<LaneMarker>,
-    >,
+    lanes: Query<(Entity, &Edge<Entity>, &AssociatedGraphs<Entity>), With<LaneMarker>>,
     locations: Query<(Entity, &Point<Entity>, &AssociatedGraphs<Entity>), With<LocationTags>>,
 ) {
     const HINT_DISCONNECTED: &str =
@@ -116,7 +112,9 @@ pub fn check_for_disconnected_nav_graph_components(
             .iter()
             .filter(|(e, _)| AncestorIter::new(&child_of, *e).any(|p| p == root_entity))
             .map(|(e, name)| {
-                let label = name.map(|n| n.0.clone()).unwrap_or_else(|| format!("{e:?}"));
+                let label = name
+                    .map(|n| n.0.clone())
+                    .unwrap_or_else(|| format!("{e:?}"));
                 (e, label)
             })
             .collect();
@@ -156,11 +154,7 @@ pub fn check_for_disconnected_nav_graph_components(
             }
 
             // Identify the largest component and flag every other one.
-            let largest = components
-                .values()
-                .map(|v| v.len())
-                .max()
-                .unwrap_or(0);
+            let largest = components.values().map(|v| v.len()).max().unwrap_or(0);
             let mut largest_skipped = false;
             for (_, lane_list) in components.iter() {
                 if !largest_skipped && lane_list.len() == largest {
@@ -222,9 +216,7 @@ pub fn check_for_disconnected_nav_graph_components(
                             entities: [loc_entity].into(),
                             kind: ISOLATED_LOCATION_ISSUE_UUID,
                         },
-                        brief: format!(
-                            "Location is isolated in nav graph '{graph_name}'"
-                        ),
+                        brief: format!("Location is isolated in nav graph '{graph_name}'"),
                         hint: HINT_ISOLATED_LOCATION.to_string(),
                     };
                     let id = commands.spawn(issue).id();
@@ -289,8 +281,7 @@ pub fn check_lane_clearance_to_walls(
     lanes: Query<(Entity, &Edge<Entity>), With<LaneMarker>>,
     walls: Query<(Entity, &Edge<Entity>), With<WallMarker>>,
 ) {
-    const HINT: &str =
-        "This lane passes within the safety clearance of a wall. A robot \
+    const HINT: &str = "This lane passes within the safety clearance of a wall. A robot \
          following the nominal centerline may collide or be unable to navigate \
          safely. Move the lane farther from the wall, or suppress this issue \
          if you have confirmed the local geometry permits passage.";
@@ -301,8 +292,7 @@ pub fn check_lane_clearance_to_walls(
         // Bucket walls by level. Each entry is (wall_entity, start_2d, end_2d).
         let mut walls_by_level: HashMap<Entity, Vec<(Entity, Vec2, Vec2)>> = HashMap::new();
         for (wall, edge) in walls.iter() {
-            let Some(level) =
-                AncestorIter::new(&child_of, wall).find(|p| levels.get(*p).is_ok())
+            let Some(level) = AncestorIter::new(&child_of, wall).find(|p| levels.get(*p).is_ok())
             else {
                 continue;
             };
@@ -326,8 +316,7 @@ pub fn check_lane_clearance_to_walls(
             let [la, lb] = edge.array();
             // Resolve the lane's level via its start anchor. Lanes that cross
             // levels (lift lanes) are handled specially by RMF; skip them.
-            let Some(level) =
-                AncestorIter::new(&child_of, la).find(|p| levels.get(*p).is_ok())
+            let Some(level) = AncestorIter::new(&child_of, la).find(|p| levels.get(*p).is_ok())
             else {
                 continue;
             };

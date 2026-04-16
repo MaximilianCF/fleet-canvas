@@ -21,6 +21,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_egui::egui::{self, Ui};
+use rmf_site_camera::PanToElement;
 use rmf_site_egui::*;
 use rmf_site_picking::{Select, Selection};
 
@@ -56,6 +57,7 @@ pub struct SearchBar<'w, 's> {
     search_state: ResMut<'w, SearchBarState>,
     selection: Res<'w, Selection>,
     select: EventWriter<'w, Select>,
+    pan_to: ResMut<'w, PanToElement>,
 }
 
 impl<'w, 's> WidgetSystem<Tile> for SearchBar<'w, 's> {
@@ -88,6 +90,8 @@ impl<'w, 's> WidgetSystem<Tile> for SearchBar<'w, 's> {
                         let label = format!("{} #{} [{}]", name.0, target_id, cat_label);
                         if ui.selectable_label(is_selected, &label).clicked() {
                             params.select.write(Select::new(Some(e)));
+                            params.pan_to.target = Some(e);
+                            params.pan_to.interruptible = true;
                         }
                         found = true;
                     }
@@ -130,6 +134,8 @@ impl<'w, 's> WidgetSystem<Tile> for SearchBar<'w, 's> {
                     let response = ui.selectable_label(is_selected, &label);
                     if response.clicked() {
                         params.select.write(Select::new(Some(*entity)));
+                        params.pan_to.target = Some(*entity);
+                        params.pan_to.interruptible = true;
                     }
                 }
             });

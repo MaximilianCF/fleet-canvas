@@ -88,8 +88,14 @@ use nearby_elements::*;
 pub mod saved_views;
 use saved_views::*;
 
+pub mod minimap;
+pub use minimap::*;
+
 pub mod search_bar;
 use search_bar::*;
+
+pub mod site_diff;
+pub use site_diff::*;
 
 pub mod selector_widget;
 pub use selector_widget::*;
@@ -198,6 +204,7 @@ impl Plugin for StandardUiPlugin {
                 #[cfg(not(target_arch = "wasm32"))]
                 NavGraphIoPlugin::default(),
             ))
+            .add_plugins((MinimapPlugin::default(), SiteDiffPlugin::default()))
             .add_systems(Startup, init_ui_style)
             .add_systems(
                 Update,

@@ -65,6 +65,9 @@ pub use group::*;
 pub mod headless_export;
 pub use headless_export::*;
 
+pub mod headless_validate;
+pub use headless_validate::*;
+
 pub mod inclusion;
 pub use inclusion::*;
 
