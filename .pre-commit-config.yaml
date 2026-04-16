@@ -15,8 +15,17 @@ repos:
     -   id: destroyed-symlinks
     -   id: end-of-file-fixer
     -   id: mixed-line-ending
--   repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+-   repo: local
     hooks:
     -   id: fmt
+        name: cargo fmt
+        entry: cargo fmt --check
+        language: system
+        types: [rust]
+        pass_filenames: false
     -   id: cargo-check
+        name: cargo check
+        entry: cargo check
+        language: system
+        types: [rust]
+        pass_filenames: false
