@@ -116,6 +116,12 @@ pub use nav_graph_lint::*;
 pub mod reachability_lint;
 pub use reachability_lint::*;
 
+pub mod charger_lint;
+pub use charger_lint::*;
+
+pub mod lane_arrows;
+pub use lane_arrows::*;
+
 pub mod path;
 pub use path::*;
 
@@ -370,6 +376,12 @@ impl Plugin for SitePlugin {
             &DOOR_LIFT_REACHABILITY_ISSUE_UUID,
             "Door/lift reachability gap",
         )
+        .add_issue_type(&CHARGER_NAME_ISSUE_UUID, "Charger name issue")
+        .add_issue_type(
+            &BIDIR_NON_DIFF_ISSUE_UUID,
+            "Bidirectional lane (non-reversible robot)",
+        )
+        .add_event::<MergeAnchors>()
         .add_systems(Update, (load_site, import_nav_graph))
         .add_systems(
             PreUpdate,
@@ -387,6 +399,8 @@ impl Plugin for SitePlugin {
                 check_for_disconnected_nav_graph_components,
                 check_lane_clearance_to_walls,
                 check_door_lift_reachability,
+                check_charger_waypoints,
+                check_bidirectional_lanes_for_non_diff,
                 check_for_orphan_model_instances,
                 check_for_hidden_model_instances,
                 check_for_accidentally_moved_instances,
@@ -410,7 +424,15 @@ impl Plugin for SitePlugin {
                 .after(SiteUpdateSet::ProcessChangesFlush)
                 .run_if(AppState::in_displaying_mode()),
         )
-        .add_systems(Update, (save_site, update_flash_highlights))
+        .add_systems(
+            Update,
+            (
+                save_site,
+                update_flash_highlights,
+                handle_merge_anchors,
+                draw_lane_direction_arrows.run_if(graph_view_active),
+            ),
+        )
         .add_systems(
             PostUpdate,
             (

@@ -292,3 +292,57 @@ impl Command for ChangeDependent {
         }
     }
 }
+
+/// Request to merge two anchors: replace all references to `remove`
+/// with `keep` across edges (lanes/walls/measurements) and points
+/// (locations), then despawn `remove`. Fired from the Diagnostics
+/// panel "Merge" button on `UNCONNECTED_ANCHORS_ISSUE_UUID` issues.
+#[derive(Event)]
+pub struct MergeAnchors {
+    pub keep: Entity,
+    pub remove: Entity,
+}
+
+/// Process [`MergeAnchors`] requests. Not undo-compatible — the UI
+/// should confirm before firing.
+pub fn handle_merge_anchors(
+    mut commands: Commands,
+    mut merge_events: EventReader<MergeAnchors>,
+    mut validate_events: EventWriter<ValidateWorkspace>,
+    mut edges: Query<&mut rmf_site_format::Edge<Entity>>,
+    mut points: Query<&mut rmf_site_format::Point<Entity>>,
+    child_of: Query<&ChildOf>,
+) {
+    for event in merge_events.read() {
+        if event.keep == event.remove {
+            continue;
+        }
+        // Replace `remove` with `keep` in every Edge.
+        for mut edge in edges.iter_mut() {
+            let arr = edge.array();
+            if arr[0] != event.remove && arr[1] != event.remove {
+                continue;
+            }
+            let new_arr = edge.array_mut();
+            if new_arr[0] == event.remove {
+                new_arr[0] = event.keep;
+            }
+            if new_arr[1] == event.remove {
+                new_arr[1] = event.keep;
+            }
+        }
+        // Replace `remove` with `keep` in every Point.
+        for mut point in points.iter_mut() {
+            if point.0 == event.remove {
+                point.0 = event.keep;
+            }
+        }
+        // Despawn the removed anchor.
+        commands.entity(event.remove).despawn();
+
+        // Ask the workspace to re-validate so the stale issue clears.
+        if let Some(root) = AncestorIter::new(&child_of, event.keep).last() {
+            validate_events.write(ValidateWorkspace(root));
+        }
+    }
+}

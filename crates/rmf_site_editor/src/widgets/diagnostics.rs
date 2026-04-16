@@ -16,7 +16,10 @@
 */
 
 use crate::{
-    site::{Change, FilteredIssueKinds, FilteredIssues, IssueKey},
+    site::{
+        Change, FilteredIssueKinds, FilteredIssues, IssueKey, MergeAnchors,
+        UNCONNECTED_ANCHORS_ISSUE_UUID,
+    },
     widgets::{prelude::*, SelectorWidget},
     CurrentWorkspace, Icons, Issue, IssueDictionary, ValidateWorkspace,
 };
@@ -71,6 +74,7 @@ pub struct Diagnostics<'w, 's> {
     display_diagnostics: ResMut<'w, DiagnosticsDisplay>,
     current_workspace: ResMut<'w, CurrentWorkspace>,
     validate_workspace: EventWriter<'w, ValidateWorkspace>,
+    merge_anchors: EventWriter<'w, MergeAnchors>,
     selector: SelectorWidget<'w, 's>,
 }
 
@@ -175,6 +179,34 @@ impl<'w, 's> Diagnostics<'w, 's> {
                                 state.selected = sel.then(|| issue.key.clone());
                                 issue_still_exists = sel;
                             }
+                            // Merge button for unconnected-anchor issues. Two-step
+                            // confirmation because merge cannot be undone.
+                            if issue.key.kind == UNCONNECTED_ANCHORS_ISSUE_UUID
+                                && issue.key.entities.len() == 2
+                            {
+                                let is_pending = state
+                                    .pending_merge
+                                    .as_ref()
+                                    .is_some_and(|k| *k == issue.key);
+                                let (label, hover) = if is_pending {
+                                    ("Confirm merge", "Merge cannot be undone. Click to proceed.")
+                                } else {
+                                    ("Merge \u{2197}", "Merge duplicate anchors (not undoable)")
+                                };
+                                if ui.small_button(label).on_hover_text(hover).clicked() {
+                                    if is_pending {
+                                        let mut it = issue.key.entities.iter();
+                                        if let (Some(keep), Some(remove)) =
+                                            (it.next().copied(), it.next().copied())
+                                        {
+                                            self.merge_anchors.write(MergeAnchors { keep, remove });
+                                        }
+                                        state.pending_merge = None;
+                                    } else {
+                                        state.pending_merge = Some(issue.key.clone());
+                                    }
+                                }
+                            }
                         });
                     }
                     if !issue_still_exists {
@@ -216,6 +248,7 @@ impl<'w, 's> Diagnostics<'w, 's> {
 pub struct DiagnosticsDisplay {
     pub show: bool,
     pub selected: Option<IssueKey<Entity>>,
+    pub pending_merge: Option<IssueKey<Entity>>,
 }
 
 fn handle_diagnostic_panel_visibility(

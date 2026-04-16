@@ -8,6 +8,31 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 ## Completed
 
+### v0.1.2 -- Dubin/VDA5050 Field Lessons
+
+**Anchor Merge** (§7)
+- Diagnostics panel "Merge" button on `UNCONNECTED_ANCHORS_ISSUE_UUID`
+- Two-step confirmation ("Merge" → "Confirm merge") since merge cannot be undone
+- `MergeAnchors` event + `handle_merge_anchors` system replaces all `Edge`/`Point`
+  references to the removed anchor, despawns it, and re-triggers `ValidateWorkspace`
+
+**Charger Name Validator** (§7)
+- Empty-name detection: `Location` with `LocationTag::Charger` but blank name
+- Per-graph duplicate-name detection: two chargers sharing a name in the same graph
+- New `CHARGER_NAME_ISSUE_UUID` registered in the issue dictionary
+
+**Bidirectional Lane Warning** (§7)
+- Checks `DifferentialDrive.bidirectional` on model descriptions
+- For sites containing non-reversible robots, flags every lane where
+  `ReverseLane != Disable` with an actionable hint
+- New `BIDIR_NON_DIFF_ISSUE_UUID` registered
+
+**Lane Direction Arrows** (§7)
+- `draw_lane_direction_arrows` gizmo system gated by `graph_view_active`
+- One-way lanes get a single forward arrow at midpoint
+- Bidirectional lanes get two opposing arrows at 40 %/60 % of length
+- Visible only in Graph View (F4) to avoid cluttering the normal 3D viewport
+
 ### v0.1.1 -- Onboarding & Identity
 
 **About Dialog** (Help > About)
@@ -456,6 +481,21 @@ tool.
 - ⏳ **`--validate` CLI mode** — run all §1 linters without UI and exit
   non-zero on errors. Plug into CI to stop merging broken nav graphs.
 
+### §7 — Non-differential robot support
+
+Validators and UX derived from real field experience with
+Dubin/VDA5050 robots (Freebotics mutley01).
+
+- ✅ **Anchor merge** — detect + one-click merge of duplicate anchors
+  from the Diagnostics panel, with confirmation prompt *(v0.1.2)*.
+- ✅ **Charger name validator** — catches empty names and duplicates
+  that would break fleet adapter `config.yaml` matching *(v0.1.2)*.
+- ✅ **Bidirectional lane warning** — flags lanes unsafe for robots
+  with `DifferentialDrive.bidirectional: false` kinematics *(v0.1.2)*.
+- ✅ **Lane direction arrows** — Bevy gizmos in Graph View (F4) showing
+  one-way forward arrow or two opposing arrows for bidirectional
+  *(v0.1.2)*.
+
 ### Progress
 
 | Category | Total | Done |
@@ -466,7 +506,8 @@ tool.
 | §4 Drawing UX | 3 | 2 |
 | §5 UX polish | 6 | 6 |
 | §6 Collaboration | 3 | 0 |
-| **Total** | **21** | **13** |
+| §7 Non-diff robot support | 4 | 4 |
+| **Total** | **25** | **17** |
 
 ---
 
