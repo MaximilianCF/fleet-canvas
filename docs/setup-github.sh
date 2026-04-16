@@ -1,13 +1,14 @@
 #!/bin/bash
 # Run this after authenticating with: gh auth login
 #
-# Sets up the GitHub repository metadata for MaximilianCF/rmf_site.
+# Sets up the GitHub repository metadata for MaximilianCF/fleet-canvas.
+# NOTE: Rust crate names remain rmf_site_* for upstream compatibility.
 
-REPO="MaximilianCF/rmf_site"
+REPO="MaximilianCF/fleet-canvas"
 
 echo "Setting repository description..."
 gh repo edit "$REPO" \
-  --description "Visual editor for RMF robot fleet management sites — Bevy + egui, Linux desktop, SDF/ROS 2 export"
+  --description "Fleet Canvas — visual editor for Open-RMF robot fleet deployment sites. Bevy + egui, Linux desktop."
 
 echo "Setting repository topics..."
 gh api -X PUT "repos/$REPO/topics" \

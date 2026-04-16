@@ -460,7 +460,7 @@ tool.
 2. Create annotated tag: `git tag v0.X.Y`
 3. Push tag: `git push origin v0.X.Y`
 4. Release workflow builds .deb + AppImage and creates GitHub Release
-5. Artifacts available at https://github.com/MaximilianCF/rmf_site/releases
+5. Artifacts available at https://github.com/MaximilianCF/fleet-canvas/releases
 
 ## Architecture Reference
 
