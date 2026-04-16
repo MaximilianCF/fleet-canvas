@@ -495,6 +495,11 @@ Dubin/VDA5050 robots (Freebotics mutley01).
 - ✅ **Lane direction arrows** — Bevy gizmos in Graph View (F4) showing
   one-way forward arrow or two opposing arrows for bidirectional
   *(v0.1.2)*.
+- ⏳ **Reference coordinates calculator** — given 2+ point pairs
+  (click on map + ROS 2 frame input), compute the `nudged` similarity
+  transform and export as YAML ready to paste into fleet adapter
+  `config.yaml`. Eliminates manual estimation of `reference_coordinates`.
+  *(Requires: coordinate input UI + 2D similarity transform algebra)*
 
 ### Progress
 
@@ -506,17 +511,32 @@ Dubin/VDA5050 robots (Freebotics mutley01).
 | §4 Drawing UX | 3 | 2 |
 | §5 UX polish | 6 | 6 |
 | §6 Collaboration | 3 | 0 |
-| §7 Non-diff robot support | 4 | 4 |
-| **Total** | **25** | **17** |
+| §7 Non-diff robot support | 5 | 4 |
+| **Total** | **26** | **17** |
 
 ---
 
 ## Known Issues
 
+> Field lessons from real Dubin/VDA5050 deployments are documented in
+> [`docs/lessons-dubin-vda5050.md`](docs/lessons-dubin-vda5050.md).
+
 - **style CI clippy**: uses `-W clippy::all` (warn only) due to remaining upstream warnings
 - **ci_linux / ci_windows disabled**: only run manually via workflow_dispatch
 - **Lanes on wrong levels**: upstream #395 (not yet investigated)
 - **Flaky roundtrip test**: upstream #409
+- **Theta offset in RMF dashboard:** the Open-RMF web dashboard subtracts
+  π from robot yaw in rendering (`robot-three.tsx`). Compensate with +π
+  in `get_data()` of the fleet adapter RobotClientAPI. In `navigate()`,
+  always recalculate theta with `atan2` — never trust the theta returned
+  by the RMF planner, as it carries the offset and will misguide
+  Dubin/Ackermann robots. *(Upstream dashboard issue, not fixable in
+  Fleet Canvas)*
+- **RMF planner is DifferentialDrive only:** the Open-RMF path planner
+  assumes robots can rotate in place and reverse. For Dubin/Ackermann/
+  Tugger robots, mitigate with one-way lanes (enforced by the §7
+  bidirectional validator) and atan2 theta recalculation in the fleet
+  adapter. *(Upstream limitation)*
 
 ## Release Process
 

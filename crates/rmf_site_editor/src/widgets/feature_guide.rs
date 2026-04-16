@@ -21,7 +21,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
 
-const TOTAL_PAGES: usize = 6;
+const TOTAL_PAGES: usize = 7;
 const TOUR_SENTINEL: &str = "tour_completed";
 
 #[derive(Resource)]
@@ -122,6 +122,35 @@ const PAGES: [Page; TOTAL_PAGES] = [
         tip: "Search bar in Inspect tab supports #ID jump syntax.\n\
               Auto-backup runs every 2 min \u{2192} ~/.cache/rmf_site_editor/",
     },
+    Page {
+        icon: "\u{1F916}",
+        title: "Non-Differential Robots",
+        body: "Robots with Dubin, Ackermann or Tugger kinematics cannot reverse\n\
+               or rotate in place. Authoring nav graphs for these robots needs care.\n\
+               \n\
+               LANES\n\
+               \u{2022} Make ALL lanes one-way \u{2014} bidirectional implies reversing.\n\
+               \u{2022} For two-way corridors: two parallel one-way lanes.\n\
+               \u{2022} Diagnostics flags bidirectional lanes on non-reversible graphs.\n\
+               \n\
+               CORNERS\n\
+               \u{2022} Never connect two straight lanes at 90\u{00B0} directly.\n\
+               \u{2022} Add 2\u{2013}3 intermediate waypoints per corner forming an arc.\n\
+               \u{2022} Each arc segment should respect the minimum turn radius.\n\
+               \n\
+               DRAWING\n\
+               \u{2022} Place ALL waypoints first, then draw lanes in loop sequence.\n\
+               \u{2022} Click origin \u{2192} destination (order defines direction).\n\
+               \u{2022} Uncheck 'bidirectional' immediately after each lane is created.\n\
+               \u{2022} Never drag waypoints on top of each other \u{2014} use Diagnostics\n\
+               \u{2003} Merge button if duplicate anchors are detected.\n\
+               \n\
+               CHARGER\n\
+               \u{2022} The charger location name must match exactly the 'charger'\n\
+               \u{2003} field in your fleet adapter config.yaml.\n\
+               \u{2022} Diagnostics flags empty or duplicate charger names.",
+        tip: "Run Diagnostics after every nav graph change.",
+    },
 ];
 
 fn render_feature_guide(mut contexts: EguiContexts, mut state: ResMut<FeatureGuideState>) {
@@ -146,13 +175,18 @@ fn render_feature_guide(mut contexts: EguiContexts, mut state: ResMut<FeatureGui
             });
 
             ui.add_space(8.0);
-            ui.label(page.body);
-            ui.add_space(4.0);
-            ui.label(
-                egui::RichText::new(page.tip)
-                    .small()
-                    .color(egui::Color32::from_rgb(100, 200, 180)),
-            );
+            egui::ScrollArea::vertical()
+                .max_height(340.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    ui.label(page.body);
+                    ui.add_space(4.0);
+                    ui.label(
+                        egui::RichText::new(page.tip)
+                            .small()
+                            .color(egui::Color32::from_rgb(100, 200, 180)),
+                    );
+                });
 
             ui.add_space(12.0);
             ui.separator();
