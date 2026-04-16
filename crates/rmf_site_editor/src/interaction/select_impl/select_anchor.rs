@@ -22,7 +22,7 @@ use bevy::ecs::{hierarchy::ChildOf, schedule::ScheduleConfigs, system::ScheduleS
 use bevy::prelude::*;
 use crossflow::*;
 
-use crate::interaction::{set_visibility, Cursor, GizmoBlockers, HighlightAnchors};
+use crate::interaction::{Cursor, GizmoBlockers, HighlightAnchors, set_visibility};
 use crate::site::{AnchorBundle, ChildCabinAnchorGroup, CurrentEditDrawing, DrawingMarker};
 use crate::workspace::CurrentWorkspace;
 use crate::{interaction::select_impl::*, site::CurrentLevel};

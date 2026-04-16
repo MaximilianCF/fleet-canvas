@@ -96,12 +96,10 @@ pub fn check_for_disconnected_nav_graph_components(
     lanes: Query<(Entity, &Edge<Entity>, &AssociatedGraphs<Entity>), With<LaneMarker>>,
     locations: Query<(Entity, &Point<Entity>, &AssociatedGraphs<Entity>), With<LocationTags>>,
 ) {
-    const HINT_DISCONNECTED: &str =
-        "The RMF fleet adapter cannot route between disconnected lane components. \
+    const HINT_DISCONNECTED: &str = "The RMF fleet adapter cannot route between disconnected lane components. \
          Either connect these lanes to the main graph with an additional lane, or \
          move them to their own nav graph.";
-    const HINT_ISOLATED_LOCATION: &str =
-        "This location is associated with a nav graph but no lane in that graph \
+    const HINT_ISOLATED_LOCATION: &str = "This location is associated with a nav graph but no lane in that graph \
          touches its anchor. The fleet adapter will not be able to dispatch tasks \
          to it. Connect a lane to this location's anchor.";
 

@@ -21,7 +21,7 @@
 
 use bevy::ecs::hierarchy::ChildOf;
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContexts};
+use bevy_egui::{EguiContexts, egui};
 use rmf_site_egui::{MenuEvent, MenuItem, ToolMenu};
 use rmf_site_format::Site;
 use std::collections::BTreeSet;

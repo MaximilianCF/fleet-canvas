@@ -17,11 +17,11 @@
 
 use crate::{
     site::{Change, LightKind, RecallLightKind},
-    widgets::{prelude::*, Inspect},
+    widgets::{Inspect, prelude::*},
 };
 use bevy::prelude::*;
 use bevy_egui::egui::{
-    color_picker::color_edit_button_rgb, CollapsingHeader, ComboBox, DragValue, Ui,
+    CollapsingHeader, ComboBox, DragValue, Ui, color_picker::color_edit_button_rgb,
 };
 use rmf_site_egui::WidgetSystem;
 

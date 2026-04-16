@@ -21,8 +21,8 @@ use bevy_rich_text3d::Text3d;
 use crate::WorkspaceSaver;
 
 use crate::{
-    site::{DoorType, GlobalFloorVisibility, LayerVisibility, ModelLoadingState},
     Autoload, WorkspaceLoader,
+    site::{DoorType, GlobalFloorVisibility, LayerVisibility, ModelLoadingState},
 };
 use crossflow::Promise;
 use rmf_site_format::NameOfSite;
