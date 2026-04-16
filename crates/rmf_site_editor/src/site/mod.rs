@@ -59,6 +59,9 @@ pub use fuel_cache::*;
 pub mod georeference;
 pub use georeference::*;
 
+pub mod goto_entity;
+pub use goto_entity::*;
+
 pub mod group;
 pub use group::*;
 
@@ -407,7 +410,7 @@ impl Plugin for SitePlugin {
                 .after(SiteUpdateSet::ProcessChangesFlush)
                 .run_if(AppState::in_displaying_mode()),
         )
-        .add_systems(Update, save_site)
+        .add_systems(Update, (save_site, update_flash_highlights))
         .add_systems(
             PostUpdate,
             (

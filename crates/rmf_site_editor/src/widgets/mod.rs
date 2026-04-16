@@ -259,9 +259,45 @@ pub fn site_ui_layout(
 }
 
 fn init_ui_style(mut egui_context: EguiContexts) {
-    // I think the default egui dark mode text color is too dim, so this changes
-    // it to a brighter white.
     let mut visuals = egui::Visuals::dark();
-    visuals.override_text_color = Some(egui::Color32::from_rgb(250, 250, 250));
+
+    // Text — brighter than egui default
+    visuals.override_text_color = Some(egui::Color32::from_rgb(230, 230, 230));
+
+    // Panel/window backgrounds — match the Bevy viewport dark grey
+    let panel_bg = egui::Color32::from_rgb(28, 28, 30);
+    let widget_bg = egui::Color32::from_rgb(44, 44, 46);
+    let widget_bg_hover = egui::Color32::from_rgb(58, 58, 62);
+    let widget_bg_active = egui::Color32::from_rgb(72, 72, 76);
+    let stroke_color = egui::Color32::from_rgb(80, 80, 84);
+    let accent = egui::Color32::from_rgb(0, 122, 255);
+
+    visuals.panel_fill = panel_bg;
+    visuals.window_fill = panel_bg;
+    visuals.extreme_bg_color = egui::Color32::from_rgb(18, 18, 20);
+
+    visuals.widgets.noninteractive.bg_fill = widget_bg;
+    visuals.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0, stroke_color);
+    visuals.widgets.noninteractive.fg_stroke =
+        egui::Stroke::new(1.0, egui::Color32::from_rgb(180, 180, 180));
+
+    visuals.widgets.inactive.bg_fill = widget_bg;
+    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, stroke_color);
+
+    visuals.widgets.hovered.bg_fill = widget_bg_hover;
+    visuals.widgets.hovered.bg_stroke =
+        egui::Stroke::new(1.0, egui::Color32::from_rgb(120, 120, 128));
+
+    visuals.widgets.active.bg_fill = widget_bg_active;
+    visuals.widgets.active.bg_stroke = egui::Stroke::new(1.5, accent);
+
+    visuals.selection.bg_fill = egui::Color32::from_rgba_unmultiplied(0, 122, 255, 80);
+    visuals.selection.stroke = egui::Stroke::new(1.0, accent);
+
+    visuals.hyperlink_color = accent;
+    visuals.faint_bg_color = egui::Color32::from_rgb(36, 36, 38);
+
+    visuals.window_stroke = egui::Stroke::new(1.0, stroke_color);
+
     egui_context.ctx_mut().set_visuals(visuals);
 }

@@ -40,6 +40,15 @@ Upstream repo: https://github.com/open-rmf/rmf_site
   `include_bytes!` + `image::load_from_memory` + `winit::window::Icon`
 - Desktop-only startup system
 
+**Dark Mode Panels** (§5)
+- Fully unified egui panel colours with the Bevy 3D viewport dark theme
+- Custom panel/window fills, widget state colours, accent blue, rounded corners
+
+**Search Goto Camera + Flash Highlight** (§5)
+- Clicking a search result pans the camera via PanToElement
+- FlashHighlight component pulses the entity's material cyan for 1.5 s
+- Auto-removes after duration, restoring original colour
+
 ### v0.0.3 -- Foundation
 
 **Save/Export UX**
@@ -404,9 +413,12 @@ Low-effort items a robotics dev notices in the first hour.
   and camera indicator *(v0.1.0)*.
 - ✅ **Cursor coordinate display** — site frame + lat/lon when
   georeferenced, shown in the status bar *(v0.1.0)*.
-- ⏳ **Dark mode panels** — unify egui UI colours with the 3D viewport.
-- ⏳ **Search-by-name with goto camera** — extend `widgets/search_bar.rs`
-  to jump the camera to the result and flash-highlight it.
+- ✅ **Dark mode panels** — egui visuals fully unified with the Bevy
+  viewport dark theme: panel/window fills, widget states, accent colour,
+  rounded corners *(v0.1.0)*.
+- ✅ **Search-by-name with goto camera** — clicking a search result pans
+  the camera to the entity and flash-highlights it in cyan for 1.5 s
+  *(v0.1.0)*.
 
 ### §6 — Collaboration / CI
 
@@ -429,9 +441,9 @@ tool.
 | §2 Live round-trip | 2 | 0 |
 | §3 Scenario preview | 3 | 3 |
 | §4 Drawing UX | 3 | 2 |
-| §5 UX polish | 6 | 4 |
+| §5 UX polish | 6 | 6 |
 | §6 Collaboration | 3 | 0 |
-| **Total** | **21** | **11** |
+| **Total** | **21** | **13** |
 
 ---
 

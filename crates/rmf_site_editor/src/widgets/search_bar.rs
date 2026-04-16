@@ -15,7 +15,7 @@
  *
 */
 
-use crate::site::{Category, NameInSite, SiteID};
+use crate::site::{Category, FlashHighlight, NameInSite, SiteID};
 use bevy::{
     ecs::system::{SystemParam, SystemState},
     prelude::*,
@@ -58,6 +58,7 @@ pub struct SearchBar<'w, 's> {
     selection: Res<'w, Selection>,
     select: EventWriter<'w, Select>,
     pan_to: ResMut<'w, PanToElement>,
+    commands: Commands<'w, 's>,
 }
 
 impl<'w, 's> WidgetSystem<Tile> for SearchBar<'w, 's> {
@@ -92,6 +93,7 @@ impl<'w, 's> WidgetSystem<Tile> for SearchBar<'w, 's> {
                             params.select.write(Select::new(Some(e)));
                             params.pan_to.target = Some(e);
                             params.pan_to.interruptible = true;
+                            params.commands.entity(e).insert(FlashHighlight::new(1.5));
                         }
                         found = true;
                     }
@@ -136,6 +138,10 @@ impl<'w, 's> WidgetSystem<Tile> for SearchBar<'w, 's> {
                         params.select.write(Select::new(Some(*entity)));
                         params.pan_to.target = Some(*entity);
                         params.pan_to.interruptible = true;
+                        params
+                            .commands
+                            .entity(*entity)
+                            .insert(FlashHighlight::new(1.5));
                     }
                 }
             });
