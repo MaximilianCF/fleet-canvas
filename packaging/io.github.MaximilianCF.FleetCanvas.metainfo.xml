@@ -5,7 +5,9 @@
   <summary>Visual editor for Open-RMF robot fleet deployment sites</summary>
   <metadata_license>MIT</metadata_license>
   <project_license>Apache-2.0</project_license>
-  <developer_name>MaximilianCF</developer_name>
+  <developer id="io.github.maximiliancf.fleetcanvas">
+    <name>MaximilianCF</name>
+  </developer>
 
   <description>
     <p>
