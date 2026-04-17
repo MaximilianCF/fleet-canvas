@@ -59,19 +59,27 @@ fn color_for_radius(radius: f32) -> Color {
     }
 }
 
-/// Resolve an anchor entity to a 2D position in its level's frame.
-/// Returns `None` if the anchor is orphaned from any level.
-fn anchor_xy(
+/// Resolve an anchor entity to a 2D world position.
+///
+/// Uses the anchor's own `GlobalTransform` so the result is valid even for
+/// the cursor-placement anchor, which is parented to the `CursorFrame`
+/// rather than a level (see `cursor.rs`).
+fn anchor_xy(anchor: Entity, anchors: &AnchorParams) -> Option<Vec2> {
+    anchors
+        .point(anchor, Category::General)
+        .ok()
+        .map(|p| p.truncate())
+}
+
+/// Find the level entity (if any) that the given anchor is parented under.
+/// Used to ensure the incoming lane's start anchor lives on the same level
+/// as the preview start, not for coordinate resolution.
+fn anchor_level(
     anchor: Entity,
-    anchors: &AnchorParams,
     child_of: &Query<&ChildOf>,
     levels: &Query<Entity, With<LevelElevation>>,
-) -> Option<(Vec2, Entity)> {
-    let level = AncestorIter::new(child_of, anchor).find(|p| levels.get(*p).is_ok())?;
-    let p = anchors
-        .point_in_parent_frame_of(anchor, Category::General, level)
-        .ok()?;
-    Some((p.truncate(), level))
+) -> Option<Entity> {
+    AncestorIter::new(child_of, anchor).find(|p| levels.get(*p).is_ok())
 }
 
 /// If a lane draw is in progress AND the start anchor already has an incoming
@@ -102,27 +110,32 @@ fn draw_curvature_gizmo(
         return;
     }
 
-    let Some((p_start, level)) = anchor_xy(start_anchor, &anchors, &child_of, &levels) else {
+    let Some(p_start) = anchor_xy(start_anchor, &anchors) else {
         return;
     };
-    let Some((p_cursor, _)) = anchor_xy(cursor_anchor, &anchors, &child_of, &levels) else {
+    let Some(p_cursor) = anchor_xy(cursor_anchor, &anchors) else {
         return;
     };
 
     // Find any existing lane whose END anchor matches the preview start.
     // Skip the preview itself (it is Pending, filtered above).
-    let prev_start = existing
+    let prev_start_anchor = existing
         .iter()
         .find(|e| e.end() == start_anchor && e.start() != start_anchor)
         .map(|e| e.start());
-    let Some(prev_start_anchor) = prev_start else {
+    let Some(prev_start_anchor) = prev_start_anchor else {
         return;
     };
-    let Some((p_prev, prev_level)) = anchor_xy(prev_start_anchor, &anchors, &child_of, &levels)
-    else {
+    let Some(p_prev) = anchor_xy(prev_start_anchor, &anchors) else {
         return;
     };
-    if prev_level != level {
+
+    // Only draw if both real anchors are on the same level (or both orphaned).
+    // The cursor-placement anchor is intentionally excluded from this check
+    // because it lives under the CursorFrame, not a level.
+    if anchor_level(start_anchor, &child_of, &levels)
+        != anchor_level(prev_start_anchor, &child_of, &levels)
+    {
         return;
     }
 
