@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-APP_NAME="rmf-site-editor"
+APP_NAME="fleet-canvas"
 APP_DIR="$PROJECT_ROOT/target/appimage/AppDir"
 
 echo "==> Building release binary..."

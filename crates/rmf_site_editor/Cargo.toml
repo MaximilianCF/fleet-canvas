@@ -82,6 +82,7 @@ file_diff = {workspace = true}
 testdir = {workspace = true}
 
 [package.metadata.deb]
+name = "fleet-canvas"
 maintainer = "RMF Site Editor Contributors"
 copyright = "2022-2026, Open Source Robotics Foundation"
 extended-description = "A visual editor for designing and managing robot fleet management (RMF) sites. Supports export to Gazebo SDF, navigation graphs, and ROS 2 launch files."
