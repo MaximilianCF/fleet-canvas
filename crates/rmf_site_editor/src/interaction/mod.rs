@@ -107,6 +107,11 @@ pub use grid::*;
 pub mod user_camera;
 pub use user_camera::*;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod dubin_tool;
+#[cfg(not(target_arch = "wasm32"))]
+pub use dubin_tool::*;
+
 use bevy::prelude::*;
 use bevy_mod_outline::OutlinePlugin;
 
@@ -204,6 +209,9 @@ impl Plugin for InteractionPlugin {
                 MeasureToolPlugin,
                 PropertiesClipboardPlugin,
             ));
+
+        #[cfg(not(target_arch = "wasm32"))]
+        app.add_plugins(DubinToolPlugin);
 
         if !self.headless {
             app.add_systems(

@@ -19,6 +19,21 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 - Floating egui label near the start anchor shows `R = X.XX m` with a
   marginal/too-tight marker when applicable
 
+**Dubin Curve Tool** (§7)
+- New interaction mode activated with `B` — generates arc waypoints
+  between two user-specified poses via `dubins_paths` (v2.7.1, f32, no
+  transitive deps)
+- Click-drag-click workflow: click anchor → drag to set departure heading
+  → click to lock → cursor motion aims arrival heading → click commits
+- Live turquoise preview of the shortest Dubin path + small green heading
+  arrows at each future waypoint
+- Configurable via an egui panel: min radius (0.1–5 m, DragValue) and
+  sample count (2–20 waypoints)
+- Generated lanes are `ReverseLane::Disable` (one-way) and default to
+  `AssociatedGraphs::All`; intermediate anchors auto-parent to the
+  current level
+- Desktop-only (`#![cfg(not(target_arch = "wasm32"))]`)
+
 ### v0.1.2 -- Dubin/VDA5050 Field Lessons
 
 **Anchor Merge** (§7)
@@ -508,6 +523,9 @@ Dubin/VDA5050 robots (Freebotics mutley01).
   *(v0.1.2)*.
 - ✅ **Curvature gizmo** — real-time turn radius arc during lane
   draw, color-coded by Dubin viability *(v0.1.3)*.
+- ✅ **Dubin Curve Tool [B]** — click-drag to generate arc waypoints
+  from shortest Dubin path, live preview, configurable radius and
+  sample count *(v0.1.3)*.
 - ⏳ **Reference coordinates calculator** — given 2+ point pairs
   (click on map + ROS 2 frame input), compute the `nudged` similarity
   transform and export as YAML ready to paste into fleet adapter
@@ -524,8 +542,8 @@ Dubin/VDA5050 robots (Freebotics mutley01).
 | §4 Drawing UX | 3 | 2 |
 | §5 UX polish | 6 | 6 |
 | §6 Collaboration | 3 | 0 |
-| §7 Non-diff robot support | 6 | 5 |
-| **Total** | **27** | **18** |
+| §7 Non-diff robot support | 7 | 6 |
+| **Total** | **28** | **19** |
 
 ---
 

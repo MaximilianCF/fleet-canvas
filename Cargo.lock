@@ -2688,6 +2688,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8b14ccef22fc6f5a8f4d7d768562a182c04ce9a3b3157b91390b52ddfdf1a76"
 
 [[package]]
+name = "dubins_paths"
+version = "2.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cea666e729d423ed22682c6787fb627f14d664b611fe7a9087608fd581a5888"
+
+[[package]]
 name = "earcutr"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5765,6 +5771,7 @@ dependencies = [
  "crossflow",
  "dae-parser",
  "dirs 5.0.1",
+ "dubins_paths",
  "ehttp",
  "file_diff",
  "futures-lite 1.13.0",

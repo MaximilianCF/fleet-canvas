@@ -105,6 +105,10 @@ No nosso caso: loop anti-horário visto no dashboard (F→#0→A→...→B→...
 
 ## 6. Arredondar cantos com waypoints intermediários
 
+> **Fleet Canvas v0.1.3+:** use a Dubin Curve Tool [B] para gerar os
+> waypoints do canto automaticamente. Waypoints manuais ainda funcionam
+> mas não são mais necessários para curvas simples.
+
 Os cantos do loop original tinham ângulos de 90° — um waypoint no final de um trecho reto conectava diretamente ao início de outro trecho reto em direção perpendicular. Para um robô Dubin, isso é impossível: ele precisa de raio mínimo de curva e não pode fazer curvas fechadas.
 
 A solução é adicionar 2-3 waypoints intermediários em cada canto, formando um arco suave. O robô recebe cada waypoint como destino sequencial, e o Nav2 Dubin planner traça curvas viáveis entre eles.
