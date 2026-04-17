@@ -8,6 +8,17 @@ Upstream repo: https://github.com/open-rmf/rmf_site
 
 ## Completed
 
+### v0.1.3 -- Dubin authoring tools
+
+**Curvature Gizmo** (§7)
+- Real-time turn radius arc drawn while a new lane is being authored
+- Only appears when the start anchor already has an incoming lane, so the
+  implied turn geometry is well defined
+- Colour-coded by Dubin viability against `DEFAULT_MIN_TURN_RADIUS_M`
+  (green ≥ 2× min, yellow ≥ min, red < min)
+- Floating egui label near the start anchor shows `R = X.XX m` with a
+  marginal/too-tight marker when applicable
+
 ### v0.1.2 -- Dubin/VDA5050 Field Lessons
 
 **Anchor Merge** (§7)
@@ -495,6 +506,8 @@ Dubin/VDA5050 robots (Freebotics mutley01).
 - ✅ **Lane direction arrows** — Bevy gizmos in Graph View (F4) showing
   one-way forward arrow or two opposing arrows for bidirectional
   *(v0.1.2)*.
+- ✅ **Curvature gizmo** — real-time turn radius arc during lane
+  draw, color-coded by Dubin viability *(v0.1.3)*.
 - ⏳ **Reference coordinates calculator** — given 2+ point pairs
   (click on map + ROS 2 frame input), compute the `nudged` similarity
   transform and export as YAML ready to paste into fleet adapter
@@ -511,8 +524,8 @@ Dubin/VDA5050 robots (Freebotics mutley01).
 | §4 Drawing UX | 3 | 2 |
 | §5 UX polish | 6 | 6 |
 | §6 Collaboration | 3 | 0 |
-| §7 Non-diff robot support | 5 | 4 |
-| **Total** | **26** | **17** |
+| §7 Non-diff robot support | 6 | 5 |
+| **Total** | **27** | **18** |
 
 ---
 

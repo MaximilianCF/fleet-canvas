@@ -122,6 +122,9 @@ pub use charger_lint::*;
 pub mod lane_arrows;
 pub use lane_arrows::*;
 
+pub mod curvature_gizmo;
+pub use curvature_gizmo::*;
+
 pub mod path;
 pub use path::*;
 
@@ -341,6 +344,7 @@ impl Plugin for SitePlugin {
             SlotcarSdfPlugin,
             MaterialPlugin::<ExtendedMaterial<StandardMaterial, LaneArrowMaterial>>::default(),
             InfiniteGridPlugin,
+            CurvatureGizmoPlugin,
         ))
         .add_plugins((
             RobotPropertiesPlugin::default(),
