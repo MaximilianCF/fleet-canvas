@@ -27,7 +27,7 @@
 //! 4. Move cursor: live preview of the shortest Dubin path.
 //! 5. Click: commits N intermediate anchors wired by one-way lanes.
 
-use crate::interaction::{Cursor, IntersectGroundPlaneParams};
+use crate::interaction::{Cursor, GizmoBlockers, IntersectGroundPlaneParams};
 use crate::site::{AnchorBundle, CurrentLevel};
 use bevy::prelude::*;
 use dubins_paths::{DubinsPath, PosRot};
@@ -107,7 +107,7 @@ fn nearest_anchor<'a>(
 
 #[allow(clippy::too_many_arguments)]
 pub fn update_dubin_tool(
-    mouse: Res<ButtonInput<MouseButton>>,
+    mut mouse: ResMut<ButtonInput<MouseButton>>,
     mut contexts: bevy_egui::EguiContexts,
     mut state: ResMut<DubinToolState>,
     mut materialize: EventWriter<DubinMaterializeRequest>,
@@ -115,16 +115,21 @@ pub fn update_dubin_tool(
     anchors: Query<(Entity, &Anchor, &GlobalTransform)>,
     active: Res<DubinActive>,
 ) {
-    if contexts.ctx_mut().wants_pointer_input() {
+    if !active.0 {
         return;
     }
-    if !active.0 {
+    if contexts.ctx_mut().wants_pointer_input() {
         return;
     }
     let Some(cursor_p) = cursor_xy(&intersect) else {
         return;
     };
     let clicked = mouse.just_pressed(MouseButton::Left);
+    // Consume the click so the standard anchor-selection / lane-draw
+    // workflow does not also spawn an edge at the same cursor position.
+    if clicked {
+        mouse.clear_just_pressed(MouseButton::Left);
+    }
 
     match &*state {
         DubinToolState::Idle => {
@@ -177,18 +182,16 @@ pub fn update_dubin_tool(
             let start_anchor = *start_anchor;
             let start_pos = *start_pos;
             let start_heading = *start_heading;
-            let prev_end = *end_pos;
-            let delta = cursor_p - prev_end;
-            let end_heading = if delta.length_squared() > 1e-4 {
-                delta.y.atan2(delta.x)
+            let _ = end_pos;
+            // Derive arrival heading from (start -> cursor) rather than the
+            // per-frame cursor delta. The delta approach collapses to a
+            // near-zero vector whenever the user pauses the mouse, producing
+            // an unstable atan2 and a flickering preview.
+            let to_cursor = cursor_p - start_pos;
+            let end_heading = if to_cursor.length_squared() > 1e-4 {
+                to_cursor.to_angle()
             } else {
-                // Fall back to heading from start so the preview has a valid pose.
-                let d = cursor_p - start_pos;
-                if d.length_squared() > 1e-4 {
-                    d.y.atan2(d.x)
-                } else {
-                    start_heading
-                }
+                start_heading
             };
             if clicked {
                 materialize.write(DubinMaterializeRequest {
@@ -329,6 +332,7 @@ const DUBIN_TOOL_MODE_LABEL: &str = "dubin_tool";
 #[derive(Resource, Default)]
 pub struct DubinActive(pub bool);
 
+#[allow(clippy::too_many_arguments)]
 pub fn handle_dubin_activation(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut contexts: bevy_egui::EguiContexts,
@@ -336,26 +340,34 @@ pub fn handle_dubin_activation(
     mut state: ResMut<DubinToolState>,
     mut cursor: ResMut<Cursor>,
     mut visibility: Query<&mut Visibility>,
+    mut gizmo_blockers: ResMut<GizmoBlockers>,
 ) {
-    if contexts.ctx_mut().wants_keyboard_input() {
-        return;
-    }
-    if keyboard.just_pressed(KeyCode::KeyB) {
-        active.0 = !active.0;
-        *state = DubinToolState::Idle;
-        if active.0 {
-            cursor.add_mode(DUBIN_TOOL_MODE_LABEL, &mut visibility);
-        } else {
-            cursor.remove_mode(DUBIN_TOOL_MODE_LABEL, &mut visibility);
-        }
-    }
-    if active.0 && keyboard.just_pressed(KeyCode::Escape) {
-        if *state == DubinToolState::Idle {
-            active.0 = false;
-            cursor.remove_mode(DUBIN_TOOL_MODE_LABEL, &mut visibility);
-        } else {
+    let was_active = active.0;
+    if !contexts.ctx_mut().wants_keyboard_input() {
+        if keyboard.just_pressed(KeyCode::KeyB) {
+            active.0 = !active.0;
             *state = DubinToolState::Idle;
+            if active.0 {
+                cursor.add_mode(DUBIN_TOOL_MODE_LABEL, &mut visibility);
+            } else {
+                cursor.remove_mode(DUBIN_TOOL_MODE_LABEL, &mut visibility);
+            }
         }
+        if active.0 && keyboard.just_pressed(KeyCode::Escape) {
+            if *state == DubinToolState::Idle {
+                active.0 = false;
+                cursor.remove_mode(DUBIN_TOOL_MODE_LABEL, &mut visibility);
+            } else {
+                *state = DubinToolState::Idle;
+            }
+        }
+    }
+    // Mirror DubinActive onto GizmoBlockers so the standard anchor-selection
+    // and lane-draw workflows ignore interactions while this tool owns input.
+    // Only update on a transition so we don't clobber blockers owned by other
+    // tools.
+    if active.0 != was_active {
+        gizmo_blockers.selecting = active.0;
     }
 }
 
