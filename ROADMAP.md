@@ -571,11 +571,16 @@ Dubin/VDA5050 robots (Freebotics mutley01).
 
 ## Release Process
 
-1. Commit and push to `main`
-2. Create annotated tag: `git tag v0.X.Y`
-3. Push tag: `git push origin v0.X.Y`
-4. Release workflow builds .deb + AppImage and creates GitHub Release
-5. Artifacts available at https://github.com/MaximilianCF/fleet-canvas/releases
+1. Bump `version` in every `crates/*/Cargo.toml` and in the
+   `[workspace.dependencies]` pins in the root `Cargo.toml` to the
+   new `X.Y.Z`. Run `cargo check` to refresh `Cargo.lock`.
+2. Commit: `git commit -am "chore: bump to vX.Y.Z"`
+3. Push: `git push origin main`
+4. Tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
+5. Push tag: `git push origin vX.Y.Z`
+   → CI (`release.yaml`) builds `.deb` + AppImage with the correct
+   version and creates a GitHub Release.
+6. Artifacts available at https://github.com/MaximilianCF/fleet-canvas/releases
 
 ## Architecture Reference
 
